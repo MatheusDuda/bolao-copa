@@ -14,7 +14,7 @@ export default {
       colors: {
         copa: {
           green: '#009C3B',
-          yellow: '#FFDF00',
+          red: '#DC2626',
           blue: '#002776',
         }
       }

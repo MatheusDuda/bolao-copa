@@ -323,6 +323,70 @@ app.get('/api/standings', requireUser, (req, res) => {
   res.json(standings);
 });
 
+const TEAM_PT = {
+  'Africa': 'África do Sul',
+  'South Africa': 'África do Sul',
+  'Germany': 'Alemanha',
+  'Saudi Arabia': 'Arábia Saudita',
+  'Algeria': 'Argélia',
+  'Argentina': 'Argentina',
+  'Australia': 'Austrália',
+  'Austria': 'Áustria',
+  'Belgium': 'Bélgica',
+  'Bosnia-Herzegovina': 'Bósnia e Herzegovina',
+  'Bosnia and Herzegovina': 'Bósnia e Herzegovina',
+  'Brazil': 'Brasil',
+  'Cape Verde Islands': 'Cabo Verde',
+  'Cape Verde': 'Cabo Verde',
+  'Canada': 'Canadá',
+  'Qatar': 'Catar',
+  'Colombia': 'Colômbia',
+  'South Korea': 'Coreia do Sul',
+  'Korea Republic': 'Coreia do Sul',
+  'Ivory Coast': 'Costa do Marfim',
+  "Côte d'Ivoire": 'Costa do Marfim',
+  'Croatia': 'Croácia',
+  'Curaçao': 'Curaçao',
+  'Egypt': 'Egito',
+  'Ecuador': 'Equador',
+  'Scotland': 'Escócia',
+  'Spain': 'Espanha',
+  'United States': 'Estados Unidos',
+  'USA': 'Estados Unidos',
+  'France': 'França',
+  'Ghana': 'Gana',
+  'Haiti': 'Haiti',
+  'Netherlands': 'Holanda',
+  'England': 'Inglaterra',
+  'Iran': 'Irã',
+  'Iraq': 'Iraque',
+  'Japan': 'Japão',
+  'Jordan': 'Jordânia',
+  'Morocco': 'Marrocos',
+  'Mexico': 'México',
+  'Norway': 'Noruega',
+  'New Zealand': 'Nova Zelândia',
+  'Panama': 'Panamá',
+  'Paraguay': 'Paraguai',
+  'Portugal': 'Portugal',
+  'DR Congo': 'República Democrática do Congo',
+  'Congo DR': 'República Democrática do Congo',
+  'Democratic Republic of Congo': 'República Democrática do Congo',
+  'Sweden': 'Suécia',
+  'Switzerland': 'Suíça',
+  'Czechia': 'Tchéquia',
+  'Czech Republic': 'Tchéquia',
+  'Tunisia': 'Tunísia',
+  'Turkey': 'Turquia',
+  'Türkiye': 'Turquia',
+  'Uruguay': 'Uruguai',
+  'Uzbekistan': 'Uzbequistão',
+};
+
+function translateTeam(name) {
+  return TEAM_PT[name] || name;
+}
+
 // Sync football-data.org
 app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
   const db = readDB();
@@ -351,8 +415,8 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
     // Update/create matches
     if (matchesData.matches) {
       for (const m of matchesData.matches) {
-        const homeTeam = m.homeTeam?.name || m.homeTeam?.shortName || '';
-        const awayTeam = m.awayTeam?.name || m.awayTeam?.shortName || '';
+        const homeTeam = translateTeam(m.homeTeam?.name || m.homeTeam?.shortName || '');
+        const awayTeam = translateTeam(m.awayTeam?.name || m.awayTeam?.shortName || '');
         const datetime = m.utcDate;
         const fdId = String(m.id);
 
@@ -421,11 +485,11 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
         for (const row of group.table || []) {
           if (row.goalsFor > bestAttackGoals) {
             bestAttackGoals = row.goalsFor;
-            bestAttackTeam = row.team?.name || null;
+            bestAttackTeam = translateTeam(row.team?.name) || null;
           }
           if (row.goalsAgainst < bestDefenseGoals) {
             bestDefenseGoals = row.goalsAgainst;
-            bestDefenseTeam = row.team?.name || null;
+            bestDefenseTeam = translateTeam(row.team?.name) || null;
           }
         }
       }

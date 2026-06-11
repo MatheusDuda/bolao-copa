@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { COPA_2026_TEAMS, BRAZIL_PERFORMANCE_OPTIONS } from '../utils/teams';
+import { COPA_2026_TEAMS, BRAZIL_PERFORMANCE_OPTIONS, TOP_SCORERS } from '../utils/teams';
 
 export default function PreTournament() {
   const { effectiveUser, user } = useAuth();
@@ -65,7 +65,7 @@ export default function PreTournament() {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6">
-      <h2 className="text-xl font-bold mb-2 text-copa-yellow">Pré-torneio</h2>
+      <h2 className="text-xl font-bold mb-2 text-copa-red">Pré-torneio</h2>
       {locked ? (
         <p className="text-orange-400 text-sm mb-4">🔒 Torneio iniciado — palpites bloqueados.</p>
       ) : (
@@ -82,8 +82,11 @@ export default function PreTournament() {
         </div>
 
         <div>
-          <label className="label">Artilheiro (nome do jogador)</label>
-          <input className="input" value={form.top_scorer} onChange={set('top_scorer')} disabled={locked} placeholder="Ex: Mbappé" />
+          <label className="label">Artilheiro</label>
+          <select className="input" value={form.top_scorer} onChange={set('top_scorer')} disabled={locked}>
+            <option value="">Selecione</option>
+            {TOP_SCORERS.map(p => <option key={p}>{p}</option>)}
+          </select>
         </div>
 
         <div>

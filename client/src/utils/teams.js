@@ -1,16 +1,25 @@
 export const COPA_2026_TEAMS = [
-  'Argentina', 'Austrália', 'Bélgica', 'Brasil', 'Canadá', 'Chile', 'Colômbia',
-  'Costa Rica', 'Croácia', 'Dinamarca', 'Equador', 'Egito', 'El Salvador',
-  'Espanha', 'Estados Unidos', 'França', 'Gana', 'Guatemala', 'Honduras',
-  'Hungria', 'Inglaterra', 'Irã', 'Iraque', 'Islândia', 'Israel', 'Itália',
-  'Japão', 'Marrocos', 'México', 'Nova Zelândia', 'Países Baixos', 'Panamá',
-  'Paraguai', 'Peru', 'Portugal', 'Qatar', 'República Checa', 'República Dominicana',
-  'Romênia', 'Sérvia', 'Senegal', 'Suíça', 'Trinidad e Tobago', 'Turquia',
-  'Ucrânia', 'Uruguai', 'Venezuela', 'África do Sul'
+  'África do Sul', 'Alemanha', 'Arábia Saudita', 'Argélia', 'Argentina',
+  'Austrália', 'Áustria', 'Bélgica', 'Bósnia e Herzegovina', 'Brasil',
+  'Cabo Verde', 'Canadá', 'Catar', 'Colômbia', 'Coreia do Sul',
+  'Costa do Marfim', 'Croácia', 'Curaçao', 'Egito', 'Equador',
+  'Escócia', 'Espanha', 'Estados Unidos', 'França', 'Gana',
+  'Haiti', 'Holanda', 'Inglaterra', 'Irã', 'Iraque',
+  'Japão', 'Jordânia', 'Marrocos', 'México', 'Noruega',
+  'Nova Zelândia', 'Panamá', 'Paraguai', 'Portugal', 'República Democrática do Congo',
+  'Suécia', 'Suíça', 'Tchéquia', 'Tunísia', 'Turquia',
+  'Uruguai', 'Uzbequistão'
 ].sort();
 
+export const TOP_SCORERS = [
+  'Kylian Mbappé', 'Harry Kane', 'Erling Haaland', 'Vinícius Júnior',
+  'Lamine Yamal', 'Lionel Messi', 'Cristiano Ronaldo', 'Ousmane Dembélé',
+  'Julián Álvarez', 'Lautaro Martínez', 'Raphinha', 'Michael Olise',
+  'Endrick', 'Omar Marmoush', 'Igor Thiago'
+];
+
 export const BRAZIL_PERFORMANCE_OPTIONS = [
-  'Campeão', 'Vice', 'Semi', 'Quartas', 'Oitavos', 'Fase de Grupos'
+  'Campeão', 'Vice', 'Semi', 'Quartas', 'Oitavos', '2ª fase', 'Fase de Grupos'
 ];
 
 export const PHASES = [

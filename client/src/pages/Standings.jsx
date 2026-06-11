@@ -26,7 +26,7 @@ export default function Standings() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <h2 className="text-xl font-bold mb-4 text-copa-yellow">Classificação</h2>
+      <h2 className="text-xl font-bold mb-4 text-copa-red">Classificação</h2>
       <div className="card p-0 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -56,9 +56,9 @@ export default function Standings() {
                     </td>
                     <td className="px-4 py-3 font-medium">
                       {entry.display_name}
-                      {isMe && <span className="ml-2 text-xs text-copa-yellow">(você)</span>}
+                      {isMe && <span className="ml-2 text-xs text-copa-red">(você)</span>}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-copa-yellow">{entry.score}</td>
+                    <td className="px-4 py-3 text-right font-bold text-copa-red">{entry.score}</td>
                     <td className="px-4 py-3 text-right text-gray-400 pr-4">{entry.score_breakdown?.match_points ?? 0}</td>
                   </tr>
                   {isExpanded && (

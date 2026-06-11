@@ -26,7 +26,7 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">⚽</div>
-          <h1 className="text-3xl font-bold text-copa-yellow">Betolão</h1>
+          <h1 className="text-3xl font-bold text-copa-red">Betolão</h1>
           <p className="text-gray-400 mt-1">Copa do Mundo 2026</p>
         </div>
         <form onSubmit={handleSubmit} className="card space-y-4">

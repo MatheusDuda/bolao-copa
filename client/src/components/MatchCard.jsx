@@ -9,7 +9,7 @@ function matchIndicator(pred, match) {
     return { icon: '✅', label: 'Placar exato (+3)', color: 'text-green-400' };
   const winner = (a, b) => a > b ? 'a' : b > a ? 'b' : 'draw';
   if (winner(pred.score_a, pred.score_b) === winner(match.score_a, match.score_b))
-    return { icon: '🟡', label: 'Vencedor certo (+1)', color: 'text-yellow-400' };
+    return { icon: '🟡', label: 'Vencedor certo (+1)', color: 'text-copa-red' };
   return { icon: '❌', label: 'Errou', color: 'text-red-400' };
 }
 
@@ -71,7 +71,7 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
 
         <div className="flex items-center gap-1">
           {match.status === 'finished' ? (
-            <span className="text-lg font-bold text-copa-yellow">
+            <span className="text-lg font-bold text-copa-red">
               {match.score_a} – {match.score_b}
             </span>
           ) : (

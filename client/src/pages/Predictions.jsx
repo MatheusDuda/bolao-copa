@@ -39,7 +39,7 @@ export default function Predictions() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <h2 className="text-xl font-bold mb-4 text-copa-yellow">Palpites</h2>
+      <h2 className="text-xl font-bold mb-4 text-copa-red">Palpites</h2>
 
       {/* Phase tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">

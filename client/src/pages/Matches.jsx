@@ -34,7 +34,7 @@ export default function Matches() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <h2 className="text-xl font-bold mb-4 text-copa-yellow">Jogos</h2>
+      <h2 className="text-xl font-bold mb-4 text-copa-red">Jogos</h2>
 
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {phases.map(ph => (
