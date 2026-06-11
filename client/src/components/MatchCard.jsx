@@ -188,8 +188,15 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
 
       {/* Indicador de bloqueio */}
       {!readOnly && isLocked && match.status !== 'finished' && (
-        <div className="pt-2 border-t border-slate-800">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-800">
           <span className="text-xs text-slate-500">🔒 Fechado</span>
+          <span className="text-xs text-slate-500">
+            Meu palpite:{' '}
+            {prediction
+              ? <span className="text-slate-300 font-semibold font-mono">{prediction.score_a} × {prediction.score_b}</span>
+              : <span className="text-slate-600">—</span>
+            }
+          </span>
         </div>
       )}
 
