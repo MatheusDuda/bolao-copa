@@ -3,6 +3,14 @@ import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { COPA_2026_TEAMS, BRAZIL_PERFORMANCE_OPTIONS, TOP_SCORERS } from '../utils/teams';
 
+function SectionTitle({ children }) {
+  return (
+    <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4 pb-2 border-b border-slate-700">
+      {children}
+    </h2>
+  );
+}
+
 export default function PreTournament() {
   const { effectiveUser, user } = useAuth();
   const [pick, setPick] = useState(null);
@@ -72,11 +80,12 @@ export default function PreTournament() {
         <p className="text-slate-500 text-sm mb-5">Esses palpites ficam bloqueados quando o torneio começa.</p>
       )}
 
-      <form onSubmit={handleSubmit} className="card p-6 space-y-6">
-        {/* 2-column grid on desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left column */}
-          <div className="space-y-5">
+      <form onSubmit={handleSubmit} className="card p-6 space-y-8">
+
+        {/* Seção Geral */}
+        <div>
+          <SectionTitle>Geral</SectionTitle>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="label flex items-center gap-2">Campeão <span className="text-xs text-copa-green font-semibold">+10 pts</span></label>
               <select className="input" value={form.champion} onChange={set('champion')} disabled={locked}>
@@ -86,15 +95,23 @@ export default function PreTournament() {
             </div>
 
             <div>
-              <label className="label flex items-center gap-2">Melhor ataque da fase de grupos <span className="text-xs text-copa-green font-semibold">+5 pts</span></label>
-              <select className="input" value={form.best_attack} onChange={set('best_attack')} disabled={locked}>
+              <label className="label flex items-center gap-2">Artilheiro <span className="text-xs text-copa-green font-semibold">+8 pts</span></label>
+              <select className="input" value={form.top_scorer} onChange={set('top_scorer')} disabled={locked}>
                 <option value="">Selecione</option>
-                {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
+                {TOP_SCORERS.map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="label flex items-center gap-2">Neymar marca pelo menos 1 gol? <span className="text-xs text-copa-green font-semibold">+3 pts</span></label>
+              <label className="label flex items-center gap-2">Desempenho do Brasil <span className="text-xs text-copa-green font-semibold">+17 pts</span></label>
+              <select className="input" value={form.brazil_performance} onChange={set('brazil_performance')} disabled={locked}>
+                <option value="">Selecione</option>
+                {BRAZIL_PERFORMANCE_OPTIONS.map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="label flex items-center gap-2">Neymar marca pelo menos 3 gols? <span className="text-xs text-copa-green font-semibold">+3 pts</span></label>
               <div className="flex gap-5 mt-2">
                 {['sim', 'nao'].map(v => (
                   <label key={v} className="flex items-center gap-2 cursor-pointer group">
@@ -113,36 +130,37 @@ export default function PreTournament() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right column */}
-          <div className="space-y-5">
+        {/* Seção Fase de Grupos */}
+        <div>
+          <SectionTitle>Fase de Grupos</SectionTitle>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="label flex items-center gap-2">Artilheiro <span className="text-xs text-copa-green font-semibold">+8 pts</span></label>
-              <select className="input" value={form.top_scorer} onChange={set('top_scorer')} disabled={locked}>
-                <option value="">Selecione</option>
-                {TOP_SCORERS.map(p => <option key={p}>{p}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="label flex items-center gap-2">Melhor defesa da fase de grupos <span className="text-xs text-copa-green font-semibold">+5 pts</span></label>
-              <select className="input" value={form.best_defense} onChange={set('best_defense')} disabled={locked}>
+              <label className="label flex items-center gap-2">Melhor ataque <span className="text-xs text-copa-green font-semibold">+5 pts</span></label>
+              <select className="input" value={form.best_attack} onChange={set('best_attack')} disabled={locked}>
                 <option value="">Selecione</option>
                 {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="label flex items-center gap-2">Desempenho do Brasil <span className="text-xs text-copa-green font-semibold">+17 pts</span></label>
-              <select className="input" value={form.brazil_performance} onChange={set('brazil_performance')} disabled={locked}>
+              <label className="label flex items-center gap-2">Melhor defesa <span className="text-xs text-copa-green font-semibold">+5 pts</span></label>
+              <select className="input" value={form.best_defense} onChange={set('best_defense')} disabled={locked}>
                 <option value="">Selecione</option>
-                {BRAZIL_PERFORMANCE_OPTIONS.map(o => <option key={o}>{o}</option>)}
+                {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
           </div>
         </div>
 
         {error && <p className="text-red-400 text-sm">{error}</p>}
+
+        {!locked && (
+          <p className="text-sm text-orange-400 flex items-center gap-2">
+            ⚠️ O pré-torneio será encerrado no sábado, 13/06.
+          </p>
+        )}
 
         {!locked && (
           <button className="btn-primary w-full" type="submit" disabled={saving}>
