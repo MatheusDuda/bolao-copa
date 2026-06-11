@@ -10,6 +10,7 @@ import PreTournament from './pages/PreTournament';
 import Standings from './pages/Standings';
 import Admin from './pages/Admin';
 import Report from './pages/Report';
+import Rules from './pages/Rules';
 
 export default function App() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function App() {
         {activeTab === 'predictions' && <Predictions />}
         {activeTab === 'pre-tournament' && <PreTournament />}
         {activeTab === 'standings' && <Standings />}
+        {activeTab === 'rules' && <Rules />}
         {activeTab === 'report' && <Report />}
         {activeTab === 'admin' && user.role === 'admin' && <Admin />}
       </main>
