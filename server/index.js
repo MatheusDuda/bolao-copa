@@ -320,7 +320,7 @@ app.put('/api/extra-results', requireUser, requireAdmin, async (req, res) => {
 });
 
 // Settings
-app.get('/api/settings', requireUser, requireAdmin, async (req, res) => {
+app.get('/api/settings', requireUser, async (req, res) => {
   const { data } = await supabase.from('settings').select('*').eq('id', 1).single();
   const { id, ...settings } = data;
   res.json(settings);

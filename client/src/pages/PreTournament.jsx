@@ -78,7 +78,7 @@ export default function PreTournament() {
           {/* Left column */}
           <div className="space-y-5">
             <div>
-              <label className="label">Campeão</label>
+              <label className="label flex items-center gap-2">Campeão <span className="text-xs text-copa-green font-semibold">+10 pts</span></label>
               <select className="input" value={form.champion} onChange={set('champion')} disabled={locked}>
                 <option value="">Selecione</option>
                 {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
@@ -86,7 +86,7 @@ export default function PreTournament() {
             </div>
 
             <div>
-              <label className="label">Melhor ataque da fase de grupos</label>
+              <label className="label flex items-center gap-2">Melhor ataque da fase de grupos <span className="text-xs text-copa-green font-semibold">+5 pts</span></label>
               <select className="input" value={form.best_attack} onChange={set('best_attack')} disabled={locked}>
                 <option value="">Selecione</option>
                 {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
@@ -94,7 +94,7 @@ export default function PreTournament() {
             </div>
 
             <div>
-              <label className="label">Neymar marca pelo menos 1 gol?</label>
+              <label className="label flex items-center gap-2">Neymar marca pelo menos 1 gol? <span className="text-xs text-copa-green font-semibold">+3 pts</span></label>
               <div className="flex gap-5 mt-2">
                 {['sim', 'nao'].map(v => (
                   <label key={v} className="flex items-center gap-2 cursor-pointer group">
@@ -117,7 +117,7 @@ export default function PreTournament() {
           {/* Right column */}
           <div className="space-y-5">
             <div>
-              <label className="label">Artilheiro</label>
+              <label className="label flex items-center gap-2">Artilheiro <span className="text-xs text-copa-green font-semibold">+8 pts</span></label>
               <select className="input" value={form.top_scorer} onChange={set('top_scorer')} disabled={locked}>
                 <option value="">Selecione</option>
                 {TOP_SCORERS.map(p => <option key={p}>{p}</option>)}
@@ -125,7 +125,7 @@ export default function PreTournament() {
             </div>
 
             <div>
-              <label className="label">Melhor defesa da fase de grupos</label>
+              <label className="label flex items-center gap-2">Melhor defesa da fase de grupos <span className="text-xs text-copa-green font-semibold">+5 pts</span></label>
               <select className="input" value={form.best_defense} onChange={set('best_defense')} disabled={locked}>
                 <option value="">Selecione</option>
                 {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
@@ -133,7 +133,7 @@ export default function PreTournament() {
             </div>
 
             <div>
-              <label className="label">Desempenho do Brasil</label>
+              <label className="label flex items-center gap-2">Desempenho do Brasil <span className="text-xs text-copa-green font-semibold">+17 pts</span></label>
               <select className="input" value={form.brazil_performance} onChange={set('brazil_performance')} disabled={locked}>
                 <option value="">Selecione</option>
                 {BRAZIL_PERFORMANCE_OPTIONS.map(o => <option key={o}>{o}</option>)}
