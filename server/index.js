@@ -36,10 +36,12 @@ async function recalculateAllScores() {
     let matchPts = 0;
     const userPreds = (predictions || []).filter(p => p.user_id === user.id);
 
+    let gamesPlayed = 0;
     for (const pred of userPreds) {
       const match = (matches || []).find(m => m.id === pred.match_id);
       let pts = 0;
       if (match && match.status === 'finished') {
+        gamesPlayed++;
         if (pred.score_a === match.score_a && pred.score_b === match.score_b) {
           pts = 3;
         } else if (winner(pred.score_a, pred.score_b) === winner(match.score_a, match.score_b)) {
@@ -67,7 +69,7 @@ async function recalculateAllScores() {
       dbUpdates.push(supabase.from('pre_tournament_picks').update({ points: pickPoints }).eq('id', pick.id));
     }
 
-    const score_breakdown = { match_points: matchPts, ...extraPts };
+    const score_breakdown = { match_points: matchPts, games_played: gamesPlayed, ...extraPts };
     const score = matchPts + pickPoints;
     dbUpdates.push(supabase.from('users').update({ score, score_breakdown }).eq('id', user.id));
   }

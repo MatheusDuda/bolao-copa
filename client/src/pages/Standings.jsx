@@ -3,7 +3,7 @@ import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
 const BREAKDOWN_LABELS = {
-  match_points: 'Jogos',
+  match_points: 'Pts de Jogos',
   champion: 'Campeão',
   top_scorer: 'Artilheiro',
   best_attack: 'Melhor ataque',
@@ -63,7 +63,7 @@ export default function Standings() {
                       {isMe && <span className="ml-2 text-xs text-copa-red">(você)</span>}
                     </td>
                     <td className="px-5 py-4 text-right font-bold text-copa-red">{entry.score}</td>
-                    <td className="px-5 py-4 text-right text-slate-500">{entry.score_breakdown?.match_points ?? 0}</td>
+                    <td className="px-5 py-4 text-right text-slate-500">{entry.score_breakdown?.games_played ?? 0}</td>
                   </tr>
                   {isExpanded && (
                     <tr key={`${entry.id}-detail`} className="border-t border-slate-800 bg-[#070d1a]">
