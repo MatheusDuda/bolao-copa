@@ -6,6 +6,7 @@ const TABS = [
   { id: 'predictions', label: 'Palpites', authRequired: true },
   { id: 'pre-tournament', label: 'Pré-torneio', authRequired: true },
   { id: 'standings', label: 'Classificação' },
+  { id: 'report', label: 'Reportar erro', authRequired: true },
   { id: 'admin', label: 'Admin', adminOnly: true },
 ];
 
