@@ -1,21 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import { readFileSync, writeFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fetch from 'node-fetch';
+import { createClient } from '@supabase/supabase-js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = join(__dirname, '../data/db.json');
-
-function readDB() {
-  return JSON.parse(readFileSync(DB_PATH, 'utf8'));
-}
-
-function writeDB(db) {
-  writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-}
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 function winner(score_a, score_b) {
   if (score_a > score_b) return 'a';
@@ -23,36 +14,65 @@ function winner(score_a, score_b) {
   return 'draw';
 }
 
-function recalculateAllScores(db) {
-  for (const user of db.users) {
+async function recalculateAllScores() {
+  const [
+    { data: users },
+    { data: predictions },
+    { data: matches },
+    { data: picks },
+    { data: extraRow }
+  ] = await Promise.all([
+    supabase.from('users').select('id'),
+    supabase.from('predictions').select('*'),
+    supabase.from('matches').select('id,score_a,score_b,status'),
+    supabase.from('pre_tournament_picks').select('*'),
+    supabase.from('extra_results').select('*').eq('id', 1).single()
+  ]);
+
+  const er = extraRow || {};
+  const dbUpdates = [];
+
+  for (const user of (users || [])) {
     let matchPts = 0;
-    for (const pred of db.predictions.filter(p => p.user_id === user.id)) {
-      const match = db.matches.find(m => m.id === pred.match_id);
-      if (!match || match.status !== 'finished') { pred.points = 0; continue; }
-      if (pred.score_a === match.score_a && pred.score_b === match.score_b) {
-        pred.points = 3;
-      } else if (winner(pred.score_a, pred.score_b) === winner(match.score_a, match.score_b)) {
-        pred.points = 1;
-      } else {
-        pred.points = 0;
+    const userPreds = (predictions || []).filter(p => p.user_id === user.id);
+
+    for (const pred of userPreds) {
+      const match = (matches || []).find(m => m.id === pred.match_id);
+      let pts = 0;
+      if (match && match.status === 'finished') {
+        if (pred.score_a === match.score_a && pred.score_b === match.score_b) {
+          pts = 3;
+        } else if (winner(pred.score_a, pred.score_b) === winner(match.score_a, match.score_b)) {
+          pts = 1;
+        }
       }
-      matchPts += pred.points;
+      matchPts += pts;
+      if (pred.points !== pts) {
+        dbUpdates.push(supabase.from('predictions').update({ points: pts }).eq('id', pred.id));
+      }
     }
-    const pick = db.pre_tournament_picks.find(p => p.user_id === user.id);
+
+    const pick = (picks || []).find(p => p.user_id === user.id);
     const extraPts = { champion: 0, top_scorer: 0, best_attack: 0, best_defense: 0, neymar: 0, brazil: 0 };
+    let pickPoints = 0;
+
     if (pick) {
-      const er = db.extra_results;
       if (er.champion && pick.champion === er.champion) extraPts.champion = 10;
       if (er.top_scorer && pick.top_scorer === er.top_scorer) extraPts.top_scorer = 8;
       if (er.best_attack && pick.best_attack === er.best_attack) extraPts.best_attack = 5;
       if (er.best_defense && pick.best_defense === er.best_defense) extraPts.best_defense = 5;
-      if (er.neymar_scored !== null && pick.neymar_scores === er.neymar_scored) extraPts.neymar = 3;
+      if (er.neymar_scored !== null && er.neymar_scored !== undefined && pick.neymar_scores === er.neymar_scored) extraPts.neymar = 3;
       if (er.brazil_performance && pick.brazil_performance === er.brazil_performance) extraPts.brazil = 17;
-      pick.points = Object.values(extraPts).reduce((a, b) => a + b, 0);
+      pickPoints = Object.values(extraPts).reduce((a, b) => a + b, 0);
+      dbUpdates.push(supabase.from('pre_tournament_picks').update({ points: pickPoints }).eq('id', pick.id));
     }
-    user.score_breakdown = { match_points: matchPts, ...extraPts };
-    user.score = matchPts + (pick?.points ?? 0);
+
+    const score_breakdown = { match_points: matchPts, ...extraPts };
+    const score = matchPts + pickPoints;
+    dbUpdates.push(supabase.from('users').update({ score, score_breakdown }).eq('id', user.id));
   }
+
+  await Promise.all(dbUpdates);
 }
 
 function isMatchLocked(match, hoursBeforeLock) {
@@ -67,16 +87,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Auth middleware — injects req.user from X-User-Id header
-app.use((req, res, next) => {
+const distPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+
+app.use(async (req, res, next) => {
   const userId = req.headers['x-user-id'];
   if (!userId) return next();
-  const db = readDB();
-  req.user = db.users.find(u => u.id === userId) || null;
-  // Admin acting on behalf of another user
+  const { data: users } = await supabase.from('users').select('*').eq('id', userId).limit(1);
+  req.user = users?.[0] || null;
   const adminId = req.headers['x-admin-id'];
   if (adminId) {
-    req.adminUser = db.users.find(u => u.id === adminId) || null;
+    const { data: adminUsers } = await supabase.from('users').select('*').eq('id', adminId).limit(1);
+    req.adminUser = adminUsers?.[0] || null;
   }
   next();
 });
@@ -93,68 +114,62 @@ function requireAdmin(req, res, next) {
 }
 
 // POST /api/login
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  const db = readDB();
-  const user = db.users.find(u => u.username === username && u.password === password);
-  if (!user) return res.status(401).json({ error: 'Usuário ou senha inválidos' });
+  const { data: users } = await supabase.from('users').select('*').eq('username', username).limit(1);
+  const user = users?.[0];
+  if (!user || user.password !== password) return res.status(401).json({ error: 'Usuário ou senha inválidos' });
   res.json({ id: user.id, username: user.username, display_name: user.display_name, role: user.role });
 });
 
 // Users
-app.get('/api/users', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
-  res.json(db.users.map(({ password, ...u }) => u));
+app.get('/api/users', requireUser, requireAdmin, async (req, res) => {
+  const { data: users } = await supabase.from('users').select('id,username,display_name,role,score,score_breakdown');
+  res.json(users);
 });
 
-app.post('/api/users', requireUser, requireAdmin, (req, res) => {
+app.post('/api/users', requireUser, requireAdmin, async (req, res) => {
   const { username, password, display_name, role } = req.body;
-  const db = readDB();
-  if (db.users.find(u => u.username === username)) {
-    return res.status(400).json({ error: 'Username já existe' });
-  }
+  const { data: existing } = await supabase.from('users').select('id').eq('username', username).limit(1);
+  if (existing?.length) return res.status(400).json({ error: 'Username já existe' });
   const user = {
     id: uuidv4(), username, password, display_name: display_name || username,
     role: role || 'user', score: 0,
     score_breakdown: { match_points: 0, champion: 0, top_scorer: 0, best_attack: 0, best_defense: 0, neymar: 0, brazil: 0 }
   };
-  db.users.push(user);
-  writeDB(db);
+  await supabase.from('users').insert(user);
   const { password: _, ...safe } = user;
   res.status(201).json(safe);
 });
 
-app.put('/api/users/:id', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
-  const idx = db.users.findIndex(u => u.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Usuário não encontrado' });
+app.put('/api/users/:id', requireUser, requireAdmin, async (req, res) => {
+  const { data: existing } = await supabase.from('users').select('id').eq('id', req.params.id).limit(1);
+  if (!existing?.length) return res.status(404).json({ error: 'Usuário não encontrado' });
   const { password, display_name, role, username } = req.body;
-  if (username) db.users[idx].username = username;
-  if (display_name) db.users[idx].display_name = display_name;
-  if (password) db.users[idx].password = password;
-  if (role) db.users[idx].role = role;
-  writeDB(db);
-  const { password: _, ...safe } = db.users[idx];
+  const updates = {};
+  if (username) updates.username = username;
+  if (display_name) updates.display_name = display_name;
+  if (password) updates.password = password;
+  if (role) updates.role = role;
+  const { data: updated } = await supabase.from('users').update(updates).eq('id', req.params.id).select().single();
+  const { password: _, ...safe } = updated;
   res.json(safe);
 });
 
-app.delete('/api/users/:id', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
-  const idx = db.users.findIndex(u => u.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Usuário não encontrado' });
-  db.users.splice(idx, 1);
-  writeDB(db);
+app.delete('/api/users/:id', requireUser, requireAdmin, async (req, res) => {
+  const { data: existing } = await supabase.from('users').select('id').eq('id', req.params.id).limit(1);
+  if (!existing?.length) return res.status(404).json({ error: 'Usuário não encontrado' });
+  await supabase.from('users').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });
 
 // Matches
-app.get('/api/matches', requireUser, (req, res) => {
-  const db = readDB();
-  res.json(db.matches);
+app.get('/api/matches', requireUser, async (req, res) => {
+  const { data: matches } = await supabase.from('matches').select('*');
+  res.json(matches);
 });
 
-app.post('/api/matches', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
+app.post('/api/matches', requireUser, requireAdmin, async (req, res) => {
   const match = {
     id: uuidv4(),
     phase: req.body.phase || 'Fase de Grupos',
@@ -166,160 +181,162 @@ app.post('/api/matches', requireUser, requireAdmin, (req, res) => {
     status: req.body.status || 'scheduled',
     football_data_id: req.body.football_data_id || null
   };
-  db.matches.push(match);
-  if (match.status === 'finished') recalculateAllScores(db);
-  writeDB(db);
+  await supabase.from('matches').insert(match);
+  if (match.status === 'finished') await recalculateAllScores();
   res.status(201).json(match);
 });
 
-app.put('/api/matches/:id', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
-  const idx = db.matches.findIndex(m => m.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Jogo não encontrado' });
-  Object.assign(db.matches[idx], req.body);
-  recalculateAllScores(db);
-  writeDB(db);
-  res.json(db.matches[idx]);
+app.put('/api/matches/:id', requireUser, requireAdmin, async (req, res) => {
+  const { data: existing } = await supabase.from('matches').select('id').eq('id', req.params.id).limit(1);
+  if (!existing?.length) return res.status(404).json({ error: 'Jogo não encontrado' });
+  const { data: updated } = await supabase.from('matches').update(req.body).eq('id', req.params.id).select().single();
+  await recalculateAllScores();
+  res.json(updated);
 });
 
-app.delete('/api/matches/:id', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
-  const idx = db.matches.findIndex(m => m.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Jogo não encontrado' });
-  db.matches.splice(idx, 1);
-  writeDB(db);
+app.delete('/api/matches/:id', requireUser, requireAdmin, async (req, res) => {
+  const { data: existing } = await supabase.from('matches').select('id').eq('id', req.params.id).limit(1);
+  if (!existing?.length) return res.status(404).json({ error: 'Jogo não encontrado' });
+  await supabase.from('matches').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });
 
 // Predictions
-app.get('/api/predictions', requireUser, (req, res) => {
-  const db = readDB();
+app.get('/api/predictions', requireUser, async (req, res) => {
   const userId = req.query.userId || req.user.id;
-  res.json(db.predictions.filter(p => p.user_id === userId));
+  const { data: predictions } = await supabase.from('predictions').select('*').eq('user_id', userId);
+  res.json(predictions);
 });
 
-app.post('/api/predictions', requireUser, (req, res) => {
-  const db = readDB();
+app.post('/api/predictions', requireUser, async (req, res) => {
   const effectiveUserId = req.body.user_id || req.user.id;
   const { match_id, score_a, score_b } = req.body;
-  const match = db.matches.find(m => m.id === match_id);
+
+  const [{ data: matchRows }, { data: settingsRow }] = await Promise.all([
+    supabase.from('matches').select('*').eq('id', match_id).limit(1),
+    supabase.from('settings').select('hours_before_lock').eq('id', 1).single()
+  ]);
+
+  const match = matchRows?.[0];
   if (!match) return res.status(404).json({ error: 'Jogo não encontrado' });
-  if (isMatchLocked(match, db.settings.hours_before_lock)) {
+  if (isMatchLocked(match, settingsRow.hours_before_lock)) {
     return res.status(400).json({ error: 'Prazo de palpite encerrado' });
   }
-  const existing = db.predictions.find(p => p.user_id === effectiveUserId && p.match_id === match_id);
-  if (existing) {
-    existing.score_a = score_a;
-    existing.score_b = score_b;
-    recalculateAllScores(db);
-    writeDB(db);
-    return res.json(existing);
+
+  const { data: existingRows } = await supabase.from('predictions').select('*').eq('user_id', effectiveUserId).eq('match_id', match_id).limit(1);
+
+  if (existingRows?.length) {
+    const { data: updated } = await supabase.from('predictions').update({ score_a, score_b }).eq('id', existingRows[0].id).select().single();
+    await recalculateAllScores();
+    return res.json(updated);
   }
+
   const pred = { id: uuidv4(), user_id: effectiveUserId, match_id, score_a, score_b, points: 0 };
-  db.predictions.push(pred);
-  recalculateAllScores(db);
-  writeDB(db);
+  await supabase.from('predictions').insert(pred);
+  await recalculateAllScores();
   res.status(201).json(pred);
 });
 
-app.put('/api/predictions/:id', requireUser, (req, res) => {
-  const db = readDB();
-  const pred = db.predictions.find(p => p.id === req.params.id);
-  if (!pred) return res.status(404).json({ error: 'Palpite não encontrado' });
-  const match = db.matches.find(m => m.id === pred.match_id);
+app.put('/api/predictions/:id', requireUser, async (req, res) => {
+  const { data: predRows } = await supabase.from('predictions').select('*').eq('id', req.params.id).limit(1);
+  if (!predRows?.length) return res.status(404).json({ error: 'Palpite não encontrado' });
+  const pred = predRows[0];
+
+  const [{ data: matchRows }, { data: settingsRow }] = await Promise.all([
+    supabase.from('matches').select('*').eq('id', pred.match_id).limit(1),
+    supabase.from('settings').select('hours_before_lock').eq('id', 1).single()
+  ]);
+
+  const match = matchRows?.[0];
   if (!match) return res.status(404).json({ error: 'Jogo não encontrado' });
-  if (isMatchLocked(match, db.settings.hours_before_lock)) {
+  if (isMatchLocked(match, settingsRow.hours_before_lock)) {
     return res.status(400).json({ error: 'Prazo de palpite encerrado' });
   }
-  pred.score_a = req.body.score_a;
-  pred.score_b = req.body.score_b;
-  recalculateAllScores(db);
-  writeDB(db);
-  res.json(pred);
+
+  const { data: updated } = await supabase.from('predictions').update({ score_a: req.body.score_a, score_b: req.body.score_b }).eq('id', req.params.id).select().single();
+  await recalculateAllScores();
+  res.json(updated);
 });
 
 // Pre-tournament picks
-app.get('/api/pre-tournament', requireUser, (req, res) => {
-  const db = readDB();
+app.get('/api/pre-tournament', requireUser, async (req, res) => {
   const userId = req.query.userId || req.user.id;
-  res.json(db.pre_tournament_picks.find(p => p.user_id === userId) || null);
+  const { data } = await supabase.from('pre_tournament_picks').select('*').eq('user_id', userId).maybeSingle();
+  res.json(data || null);
 });
 
-app.post('/api/pre-tournament', requireUser, (req, res) => {
-  const db = readDB();
+app.post('/api/pre-tournament', requireUser, async (req, res) => {
   const actor = req.adminUser || req.user;
-  if (isTournamentStarted(db.settings.copa_start_date) && actor.role !== 'admin') {
+  const { data: settingsRow } = await supabase.from('settings').select('copa_start_date').eq('id', 1).single();
+
+  if (isTournamentStarted(settingsRow.copa_start_date) && actor.role !== 'admin') {
     return res.status(400).json({ error: 'Torneio já começou, palpites pré-torneio bloqueados' });
   }
+
   const effectiveUserId = req.body.user_id || req.user.id;
-  const existing = db.pre_tournament_picks.find(p => p.user_id === effectiveUserId);
+  const { data: existing } = await supabase.from('pre_tournament_picks').select('*').eq('user_id', effectiveUserId).maybeSingle();
+
   if (existing) {
-    Object.assign(existing, req.body, { user_id: effectiveUserId });
-    recalculateAllScores(db);
-    writeDB(db);
-    return res.json(existing);
+    const { data: updated } = await supabase.from('pre_tournament_picks').update({ ...req.body, user_id: effectiveUserId }).eq('id', existing.id).select().single();
+    await recalculateAllScores();
+    return res.json(updated);
   }
+
   const pick = { id: uuidv4(), user_id: effectiveUserId, points: 0, ...req.body };
-  db.pre_tournament_picks.push(pick);
-  recalculateAllScores(db);
-  writeDB(db);
+  await supabase.from('pre_tournament_picks').insert(pick);
+  await recalculateAllScores();
   res.status(201).json(pick);
 });
 
-app.put('/api/pre-tournament/:id', requireUser, (req, res) => {
-  const db = readDB();
+app.put('/api/pre-tournament/:id', requireUser, async (req, res) => {
   const actor = req.adminUser || req.user;
-  if (isTournamentStarted(db.settings.copa_start_date) && actor.role !== 'admin') {
+  const { data: settingsRow } = await supabase.from('settings').select('copa_start_date').eq('id', 1).single();
+
+  if (isTournamentStarted(settingsRow.copa_start_date) && actor.role !== 'admin') {
     return res.status(400).json({ error: 'Torneio já começou, palpites pré-torneio bloqueados' });
   }
-  const idx = db.pre_tournament_picks.findIndex(p => p.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Pick não encontrado' });
-  Object.assign(db.pre_tournament_picks[idx], req.body);
-  recalculateAllScores(db);
-  writeDB(db);
-  res.json(db.pre_tournament_picks[idx]);
+
+  const { data: existing } = await supabase.from('pre_tournament_picks').select('id').eq('id', req.params.id).limit(1);
+  if (!existing?.length) return res.status(404).json({ error: 'Pick não encontrado' });
+
+  const { data: updated } = await supabase.from('pre_tournament_picks').update(req.body).eq('id', req.params.id).select().single();
+  await recalculateAllScores();
+  res.json(updated);
 });
 
 // Extra results
-app.get('/api/extra-results', requireUser, (req, res) => {
-  const db = readDB();
-  res.json(db.extra_results);
+app.get('/api/extra-results', requireUser, async (req, res) => {
+  const { data } = await supabase.from('extra_results').select('*').eq('id', 1).single();
+  const { id, ...result } = data;
+  res.json(result);
 });
 
-app.put('/api/extra-results', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
-  Object.assign(db.extra_results, req.body);
-  recalculateAllScores(db);
-  writeDB(db);
-  res.json(db.extra_results);
+app.put('/api/extra-results', requireUser, requireAdmin, async (req, res) => {
+  await supabase.from('extra_results').update(req.body).eq('id', 1);
+  const { data } = await supabase.from('extra_results').select('*').eq('id', 1).single();
+  await recalculateAllScores();
+  const { id, ...result } = data;
+  res.json(result);
 });
 
 // Settings
-app.get('/api/settings', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
-  res.json(db.settings);
+app.get('/api/settings', requireUser, requireAdmin, async (req, res) => {
+  const { data } = await supabase.from('settings').select('*').eq('id', 1).single();
+  const { id, ...settings } = data;
+  res.json(settings);
 });
 
-app.put('/api/settings', requireUser, requireAdmin, (req, res) => {
-  const db = readDB();
-  Object.assign(db.settings, req.body);
-  writeDB(db);
-  res.json(db.settings);
+app.put('/api/settings', requireUser, requireAdmin, async (req, res) => {
+  await supabase.from('settings').update(req.body).eq('id', 1);
+  const { data } = await supabase.from('settings').select('*').eq('id', 1).single();
+  const { id, ...settings } = data;
+  res.json(settings);
 });
 
 // Standings
-app.get('/api/standings', requireUser, (req, res) => {
-  const db = readDB();
-  const standings = db.users
-    .map(u => ({
-      id: u.id,
-      display_name: u.display_name,
-      username: u.username,
-      score: u.score,
-      score_breakdown: u.score_breakdown
-    }))
-    .sort((a, b) => b.score - a.score)
-    .map((u, i) => ({ ...u, position: i + 1 }));
+app.get('/api/standings', requireUser, async (req, res) => {
+  const { data: users } = await supabase.from('users').select('id,display_name,username,score,score_breakdown').order('score', { ascending: false });
+  const standings = (users || []).map((u, i) => ({ ...u, position: i + 1 }));
   res.json(standings);
 });
 
@@ -389,7 +406,6 @@ function translateTeam(name) {
 
 // Sync football-data.org
 app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
-  const db = readDB();
   const apiKey = process.env.FOOTBALL_DATA_API_KEY;
   if (!apiKey) return res.status(400).json({ error: 'API key não configurada' });
 
@@ -412,7 +428,6 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
     let synced = 0;
     let created = 0;
 
-    // Update/create matches
     if (matchesData.matches) {
       for (const m of matchesData.matches) {
         const homeTeam = translateTeam(m.homeTeam?.name || m.homeTeam?.shortName || '');
@@ -420,11 +435,12 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
         const datetime = m.utcDate;
         const fdId = String(m.id);
 
-        let existing = db.matches.find(dm => dm.football_data_id === fdId);
+        const { data: byFdId } = await supabase.from('matches').select('id').eq('football_data_id', fdId).limit(1);
+        let existing = byFdId?.[0];
+
         if (!existing) {
-          existing = db.matches.find(dm =>
-            dm.team_a === homeTeam && dm.team_b === awayTeam
-          );
+          const { data: byTeams } = await supabase.from('matches').select('id').eq('team_a', homeTeam).eq('team_b', awayTeam).limit(1);
+          existing = byTeams?.[0];
         }
 
         const phaseMap = {
@@ -444,16 +460,15 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
         const score_b = m.score?.fullTime?.away ?? null;
 
         if (existing) {
-          existing.football_data_id = fdId;
-          existing.status = status;
+          const updates = { football_data_id: fdId, status, datetime };
           if (status === 'finished') {
-            existing.score_a = score_a;
-            existing.score_b = score_b;
+            updates.score_a = score_a;
+            updates.score_b = score_b;
           }
-          existing.datetime = datetime;
+          await supabase.from('matches').update(updates).eq('id', existing.id);
           synced++;
         } else {
-          db.matches.push({
+          await supabase.from('matches').insert({
             id: uuidv4(),
             football_data_id: fdId,
             phase,
@@ -469,13 +484,13 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
       }
     }
 
-    // Top scorer
+    const extraUpdates = {};
+
     if (scorersData.scorers?.length > 0) {
       const top = scorersData.scorers[0];
-      db.extra_results.top_scorer = top.player?.name || null;
+      extraUpdates.top_scorer = top.player?.name || null;
     }
 
-    // Best attack / best defense from group standings
     if (standingsData.standings) {
       const groupStandings = standingsData.standings.filter(s => s.stage === 'GROUP_STAGE');
       let bestAttackTeam = null, bestAttackGoals = -1;
@@ -493,17 +508,23 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
           }
         }
       }
-      if (bestAttackTeam) db.extra_results.best_attack = bestAttackTeam;
-      if (bestDefenseTeam) db.extra_results.best_defense = bestDefenseTeam;
+      if (bestAttackTeam) extraUpdates.best_attack = bestAttackTeam;
+      if (bestDefenseTeam) extraUpdates.best_defense = bestDefenseTeam;
     }
 
-    recalculateAllScores(db);
-    writeDB(db);
+    if (Object.keys(extraUpdates).length) {
+      await supabase.from('extra_results').update(extraUpdates).eq('id', 1);
+    }
+
+    await recalculateAllScores();
     res.json({ ok: true, synced, created, message: `${synced} jogos atualizados, ${created} criados` });
   } catch (err) {
     console.error('Sync error:', err);
     res.status(500).json({ error: 'Erro ao sincronizar: ' + err.message });
   }
 });
+
+app.use(express.static(distPath));
+app.get('*', (req, res) => res.sendFile(join(distPath, 'index.html')));
 
 app.listen(3001, () => console.log('Betolão server running on http://localhost:3001'));

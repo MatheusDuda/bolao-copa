@@ -3,11 +3,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "build": "vite build --config client/vite.config.js",
+    "start": "node --env-file=.env server/index.js",
     "dev": "vite --config client/vite.config.js",
-    "server": "node --env-file=.env server/index.js",
-    "start": "concurrently \"npm run server\" \"npm run dev\""
+    "server": "node --env-file=.env server/index.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
     "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",

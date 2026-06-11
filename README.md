@@ -1,11 +1,16 @@
 # Betolão ⚽
 
-Bolão da Copa do Mundo 2026 — SPA em React + Vite + Tailwind com backend Express e persistência em `data/db.json`.
+Bolão da Copa do Mundo 2026 — SPA em React + Vite + Tailwind com backend Express e persistência no Supabase (PostgreSQL).
 
 ## Setup
 
 ```bash
 npm install
+```
+
+Preencha o `.env` com as credenciais do Supabase (veja seção abaixo), então:
+
+```bash
 npm start
 ```
 
@@ -25,6 +30,14 @@ npm start
 | `npm start`   | Sobe Express + Vite juntos     |
 | `npm run dev` | Só o frontend (Vite)           |
 | `npm run server` | Só o backend (Express)      |
+
+## Setup Supabase
+
+1. Crie um projeto em [supabase.com](https://supabase.com)
+2. No SQL Editor do projeto, cole o conteúdo de `supabase/schema.sql` e execute
+3. Em **Project Settings → API**, copie:
+   - **Project URL** → `SUPABASE_URL` no `.env`
+   - **service_role** secret → `SUPABASE_SERVICE_KEY` no `.env`
 
 ## Configurar API Key (football-data.org)
 
