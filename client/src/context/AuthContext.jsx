@@ -34,10 +34,14 @@ export function AuthProvider({ children }) {
     setVotingAsState(targetUser);
   }, []);
 
+  const loginAsGuest = useCallback(() => {
+    setUser({ id: null, role: 'guest', display_name: 'Visitante' });
+  }, []);
+
   const effectiveUser = votingAs || user;
 
   return (
-    <AuthContext.Provider value={{ user, votingAs, effectiveUser, login, logout, setVotingAs }}>
+    <AuthContext.Provider value={{ user, votingAs, effectiveUser, login, logout, loginAsGuest, setVotingAs }}>
       {children}
     </AuthContext.Provider>
   );

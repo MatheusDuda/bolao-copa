@@ -1,19 +1,33 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 const TABS = [
-  { id: 'predictions', label: 'Palpites' },
-  { id: 'matches', label: 'Jogos' },
-  { id: 'pre-tournament', label: 'Pré-torneio' },
+  { id: 'predictions', label: 'Palpites', authRequired: true },
+  { id: 'pre-tournament', label: 'Pré-torneio', authRequired: true },
   { id: 'standings', label: 'Classificação' },
   { id: 'admin', label: 'Admin', adminOnly: true },
 ];
 
 export default function TabNav({ activeTab, setActiveTab }) {
-  const { user } = useAuth();
-  const tabs = TABS.filter(t => !t.adminOnly || user?.role === 'admin');
+  const { user, effectiveUser } = useAuth();
+  const isGuest = user?.role === 'guest';
+  const tabs = TABS.filter(t => {
+    if (t.adminOnly && user?.role !== 'admin') return false;
+    if (t.authRequired && isGuest) return false;
+    return true;
+  });
+  const [pretournamentDone, setPretournamentDone] = useState(true);
+
+  useEffect(() => {
+    if (!effectiveUser?.id) return;
+    api.getPreTournament(effectiveUser.id).then(pick => {
+      setPretournamentDone(pick !== null);
+    });
+  }, [effectiveUser?.id, activeTab]);
 
   return (
-    <nav className="bg-[#0f172a]/95 backdrop-blur-sm border-b border-slate-800 sticky top-[52px] z-40">
+    <nav className="bg-[#0f172a]/95 backdrop-blur-sm border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto">
         {tabs.map(tab => (
           <button
@@ -25,7 +39,14 @@ export default function TabNav({ activeTab, setActiveTab }) {
                 : 'border-transparent text-slate-400 hover:text-white font-medium'
             }`}
           >
-            {tab.label}
+            <span className="flex items-center gap-1">
+              {tab.label}
+              {tab.id === 'pre-tournament' && !pretournamentDone && (
+                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-600 text-white text-[10px] font-bold leading-none">
+                  !
+                </span>
+              )}
+            </span>
           </button>
         ))}
       </div>

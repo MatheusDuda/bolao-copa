@@ -11,6 +11,7 @@ export default function Predictions() {
   const [predictions, setPredictions] = useState([]);
   const [activePhase, setActivePhase] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   const load = async () => {
     const [m, p] = await Promise.all([
@@ -31,6 +32,11 @@ export default function Predictions() {
   const phaseMatches = matches
     .filter(m => m.phase === currentPhase)
     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+
+  const todayStr = new Date().toDateString();
+  const todayMatches = phaseMatches.filter(m => new Date(m.datetime).toDateString() === todayStr);
+  const otherMatches = phaseMatches.filter(m => new Date(m.datetime).toDateString() !== todayStr);
+  const hasToday = todayMatches.length > 0;
 
   if (loading) return <div className="py-16 text-center text-slate-500">Carregando...</div>;
   if (phases.length === 0) return (
@@ -63,6 +69,53 @@ export default function Predictions() {
         <div className="flex-1 min-w-0">
           {phaseMatches.length === 0 ? (
             <p className="text-slate-500">Nenhum jogo nesta fase.</p>
+          ) : hasToday ? (
+            <>
+              <div className="grid gap-5 sm:grid-cols-2">
+                {todayMatches.map(match => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    prediction={predMap[match.id]}
+                    onSaved={load}
+                  />
+                ))}
+              </div>
+
+              {otherMatches.length > 0 && (
+                <div className="mt-6">
+                  <button
+                    onClick={() => setShowAll(v => !v)}
+                    className="w-full flex items-center gap-3 text-slate-500 hover:text-white transition-colors py-2"
+                  >
+                    <div className="flex-1 h-px bg-slate-700" />
+                    <span className="text-sm whitespace-nowrap">
+                      {showAll ? 'Ver menos' : `Ver todos os jogos (${otherMatches.length})`}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <div className="flex-1 h-px bg-slate-700" />
+                  </button>
+
+                  {showAll && (
+                    <div className="grid gap-5 sm:grid-cols-2 mt-5">
+                      {otherMatches.map(match => (
+                        <MatchCard
+                          key={match.id}
+                          match={match}
+                          prediction={predMap[match.id]}
+                          onSaved={load}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2">
               {phaseMatches.map(match => (

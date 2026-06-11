@@ -5,7 +5,7 @@ export default function Header() {
   const isVoting = !!votingAs;
 
   return (
-    <header className="sticky top-0 z-50">
+    <header>
       <div className={`${isVoting ? 'bg-orange-900/40 border-b border-orange-700' : 'bg-[#030712] border-b border-slate-800'} transition-colors`}>
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -15,7 +15,14 @@ export default function Header() {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            {isVoting ? (
+            {user?.role === 'guest' ? (
+              <button
+                onClick={logout}
+                className="text-sm text-copa-green hover:text-white transition-colors px-2 py-1 rounded hover:bg-slate-800"
+              >
+                Fazer login
+              </button>
+            ) : isVoting ? (
               <>
                 <span className="text-sm font-semibold text-orange-200">
                   Votando por <span className="underline">{votingAs.display_name}</span>
@@ -30,12 +37,14 @@ export default function Header() {
             ) : (
               <span className="text-sm text-slate-300">{user?.display_name}</span>
             )}
-            <button
-              onClick={logout}
-              className="text-sm text-slate-300 hover:text-white transition-colors px-2 py-1 rounded hover:bg-slate-800"
-            >
-              Sair
-            </button>
+            {user?.role !== 'guest' && (
+              <button
+                onClick={logout}
+                className="text-sm text-slate-300 hover:text-white transition-colors px-2 py-1 rounded hover:bg-slate-800"
+              >
+                Sair
+              </button>
+            )}
           </div>
         </div>
       </div>

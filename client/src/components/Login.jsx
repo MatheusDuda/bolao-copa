@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginAsGuest } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -41,6 +41,13 @@ export default function Login() {
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button className="btn-primary w-full" type="submit" disabled={loading}>
             {loading ? 'Entrando...' : 'Entrar'}
+          </button>
+          <button
+            type="button"
+            onClick={loginAsGuest}
+            className="w-full text-sm text-slate-400 hover:text-white transition-colors py-2 text-center"
+          >
+            Visualizar sem login →
           </button>
         </form>
         <div className="h-0.5 w-full mt-0 rounded-b-xl overflow-hidden" style={{ background: 'linear-gradient(90deg, #DC2626 0%, #DC2626 33%, #009C3B 33%, #009C3B 66%, #002776 66%, #002776 100%)' }} />

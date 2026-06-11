@@ -164,7 +164,7 @@ app.delete('/api/users/:id', requireUser, requireAdmin, async (req, res) => {
 });
 
 // Matches
-app.get('/api/matches', requireUser, async (req, res) => {
+app.get('/api/matches', async (req, res) => {
   const { data: matches } = await supabase.from('matches').select('*');
   res.json(matches);
 });
@@ -334,8 +334,8 @@ app.put('/api/settings', requireUser, requireAdmin, async (req, res) => {
 });
 
 // Standings
-app.get('/api/standings', requireUser, async (req, res) => {
-  const { data: users } = await supabase.from('users').select('id,display_name,username,score,score_breakdown').order('score', { ascending: false });
+app.get('/api/standings', async (req, res) => {
+  const { data: users } = await supabase.from('users').select('id,display_name,username,score,score_breakdown,role').neq('role', 'admin').order('score', { ascending: false });
   const standings = (users || []).map((u, i) => ({ ...u, position: i + 1 }));
   res.json(standings);
 });
