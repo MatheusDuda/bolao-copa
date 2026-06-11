@@ -107,6 +107,14 @@ export default function PreTournament() {
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
 
+  const isDirty = !pick ||
+    form.champion !== (pick.champion || '') ||
+    form.top_scorer !== (pick.top_scorer || '') ||
+    form.best_attack !== (pick.best_attack || '') ||
+    form.best_defense !== (pick.best_defense || '') ||
+    form.brazil_performance !== (pick.brazil_performance || '') ||
+    form.neymar_scores !== (pick.neymar_scores === true ? 'sim' : pick.neymar_scores === false ? 'nao' : '');
+
   if (loading) return <div className="py-16 text-center text-slate-500">Carregando...</div>;
 
   return (
@@ -201,8 +209,16 @@ export default function PreTournament() {
         )}
 
         {!locked && (
-          <button className="btn-primary w-full" type="submit" disabled={saving}>
-            {saving ? 'Salvando...' : saved ? '✓ Salvo!' : 'Salvar palpites'}
+          <button
+            type="submit"
+            disabled={saving || !isDirty}
+            className={`w-full py-2.5 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed
+                        ${isDirty
+                          ? 'bg-copa-green hover:bg-green-600 text-white disabled:opacity-50'
+                          : 'bg-slate-700 text-slate-400'
+                        }`}
+          >
+            {saving ? 'Salvando...' : isDirty ? 'Salvar palpites' : '✓ Salvo'}
           </button>
         )}
 

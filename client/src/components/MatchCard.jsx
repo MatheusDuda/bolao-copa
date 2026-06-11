@@ -30,6 +30,9 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
   const isLocked = hours < (match.lock_hours ?? 1);
   const canEdit = !readOnly && !isLocked && match.status !== 'finished';
 
+  const isDirty = scoreA !== (prediction?.score_a ?? 0) || scoreB !== (prediction?.score_b ?? 0);
+  const alreadySaved = prediction !== undefined && !isDirty;
+
   const handleSave = async () => {
     setSaving(true);
     setError('');
@@ -169,12 +172,15 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
           {canEdit && (
             <button
               onClick={handleSave}
-              disabled={saving}
-              className="ml-2 self-center px-5 py-2.5 bg-copa-green hover:bg-green-600
-                         text-white font-semibold rounded-lg transition-colors
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={saving || alreadySaved}
+              className={`ml-2 self-center px-5 py-2.5 font-semibold rounded-lg transition-colors
+                          disabled:cursor-not-allowed
+                          ${alreadySaved
+                            ? 'bg-slate-700 text-slate-400'
+                            : 'bg-copa-green hover:bg-green-600 text-white disabled:opacity-50'
+                          }`}
             >
-              {saving ? '...' : saved ? '✓' : 'Salvar'}
+              {saving ? '...' : alreadySaved ? '✓ Salvo' : 'Salvar'}
             </button>
           )}
         </div>
