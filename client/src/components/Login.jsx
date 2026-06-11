@@ -25,11 +25,11 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">⚽</div>
-          <h1 className="text-3xl font-bold text-copa-red">Betolão</h1>
-          <p className="text-gray-400 mt-1">Copa do Mundo 2026</p>
+          <div className="text-5xl mb-4">⚽</div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Betolão</h1>
+          <p className="text-slate-500 mt-1 text-sm">Copa do Mundo 2026</p>
         </div>
-        <form onSubmit={handleSubmit} className="card space-y-4">
+        <form onSubmit={handleSubmit} className="card p-6 space-y-4">
           <div>
             <label className="label">Usuário</label>
             <input className="input" value={username} onChange={e => setUsername(e.target.value)} autoFocus />
@@ -43,6 +43,7 @@ export default function Login() {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+        <div className="h-0.5 w-full mt-0 rounded-b-xl overflow-hidden" style={{ background: 'linear-gradient(90deg, #DC2626 0%, #DC2626 33%, #009C3B 33%, #009C3B 66%, #002776 66%, #002776 100%)' }} />
       </div>
     </div>
   );

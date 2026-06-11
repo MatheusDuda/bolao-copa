@@ -61,74 +61,85 @@ export default function PreTournament() {
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Carregando...</div>;
+  if (loading) return <div className="py-16 text-center text-slate-500">Carregando...</div>;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-6">
-      <h2 className="text-xl font-bold mb-2 text-copa-red">Pré-torneio</h2>
+    <div className="max-w-2xl">
+      <h1 className="text-3xl font-black text-white mb-6 tracking-tight">Pré-torneio</h1>
       {locked ? (
-        <p className="text-orange-400 text-sm mb-4">🔒 Torneio iniciado — palpites bloqueados.</p>
+        <p className="text-orange-400 text-sm mb-5">🔒 Torneio iniciado — palpites bloqueados.</p>
       ) : (
-        <p className="text-gray-400 text-sm mb-4">Esses palpites ficam bloqueados quando o torneio começa.</p>
+        <p className="text-slate-500 text-sm mb-5">Esses palpites ficam bloqueados quando o torneio começa.</p>
       )}
 
-      <form onSubmit={handleSubmit} className="card space-y-4">
-        <div>
-          <label className="label">Campeão</label>
-          <select className="input" value={form.champion} onChange={set('champion')} disabled={locked}>
-            <option value="">Selecione</option>
-            {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
-          </select>
-        </div>
+      <form onSubmit={handleSubmit} className="card p-6 space-y-6">
+        {/* 2-column grid on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left column */}
+          <div className="space-y-5">
+            <div>
+              <label className="label">Campeão</label>
+              <select className="input" value={form.champion} onChange={set('champion')} disabled={locked}>
+                <option value="">Selecione</option>
+                {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
 
-        <div>
-          <label className="label">Artilheiro</label>
-          <select className="input" value={form.top_scorer} onChange={set('top_scorer')} disabled={locked}>
-            <option value="">Selecione</option>
-            {TOP_SCORERS.map(p => <option key={p}>{p}</option>)}
-          </select>
-        </div>
+            <div>
+              <label className="label">Melhor ataque da fase de grupos</label>
+              <select className="input" value={form.best_attack} onChange={set('best_attack')} disabled={locked}>
+                <option value="">Selecione</option>
+                {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
 
-        <div>
-          <label className="label">Melhor ataque da fase de grupos</label>
-          <select className="input" value={form.best_attack} onChange={set('best_attack')} disabled={locked}>
-            <option value="">Selecione</option>
-            {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
-          </select>
-        </div>
-
-        <div>
-          <label className="label">Melhor defesa da fase de grupos</label>
-          <select className="input" value={form.best_defense} onChange={set('best_defense')} disabled={locked}>
-            <option value="">Selecione</option>
-            {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
-          </select>
-        </div>
-
-        <div>
-          <label className="label">Neymar marca pelo menos 1 gol?</label>
-          <div className="flex gap-4 mt-1">
-            {['sim', 'nao'].map(v => (
-              <label key={v} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio" name="neymar" value={v}
-                  checked={form.neymar_scores === v}
-                  onChange={set('neymar_scores')}
-                  disabled={locked}
-                  className="accent-copa-green"
-                />
-                <span className="text-sm">{v === 'sim' ? 'Sim' : 'Não'}</span>
-              </label>
-            ))}
+            <div>
+              <label className="label">Neymar marca pelo menos 1 gol?</label>
+              <div className="flex gap-5 mt-2">
+                {['sim', 'nao'].map(v => (
+                  <label key={v} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="radio" name="neymar" value={v}
+                      checked={form.neymar_scores === v}
+                      onChange={set('neymar_scores')}
+                      disabled={locked}
+                      className="accent-copa-green w-4 h-4"
+                    />
+                    <span className="text-sm text-slate-300 group-hover:text-white transition-colors">
+                      {v === 'sim' ? 'Sim' : 'Não'}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="label">Desempenho do Brasil</label>
-          <select className="input" value={form.brazil_performance} onChange={set('brazil_performance')} disabled={locked}>
-            <option value="">Selecione</option>
-            {BRAZIL_PERFORMANCE_OPTIONS.map(o => <option key={o}>{o}</option>)}
-          </select>
+          {/* Right column */}
+          <div className="space-y-5">
+            <div>
+              <label className="label">Artilheiro</label>
+              <select className="input" value={form.top_scorer} onChange={set('top_scorer')} disabled={locked}>
+                <option value="">Selecione</option>
+                {TOP_SCORERS.map(p => <option key={p}>{p}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="label">Melhor defesa da fase de grupos</label>
+              <select className="input" value={form.best_defense} onChange={set('best_defense')} disabled={locked}>
+                <option value="">Selecione</option>
+                {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="label">Desempenho do Brasil</label>
+              <select className="input" value={form.brazil_performance} onChange={set('brazil_performance')} disabled={locked}>
+                <option value="">Selecione</option>
+                {BRAZIL_PERFORMANCE_OPTIONS.map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+          </div>
         </div>
 
         {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -140,8 +151,8 @@ export default function PreTournament() {
         )}
 
         {pick && (
-          <div className="text-xs text-gray-500 pt-1">
-            Pontos atuais: <span className="text-gray-300 font-semibold">{pick.points ?? 0} pts</span>
+          <div className="text-xs text-slate-600 pt-1 border-t border-slate-800">
+            Pontos atuais: <span className="text-slate-300 font-semibold">{pick.points ?? 0} pts</span>
           </div>
         )}
       </form>

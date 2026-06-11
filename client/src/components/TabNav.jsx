@@ -13,16 +13,16 @@ export default function TabNav({ activeTab, setActiveTab }) {
   const tabs = TABS.filter(t => !t.adminOnly || user?.role === 'admin');
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-700">
-      <div className="max-w-4xl mx-auto px-4 flex overflow-x-auto">
+    <nav className="bg-[#0f172a]/95 backdrop-blur-sm border-b border-slate-800 sticky top-[52px] z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+            className={`px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-copa-red text-copa-red'
-                : 'border-transparent text-gray-400 hover:text-gray-200'
+                ? 'border-copa-red text-white font-semibold'
+                : 'border-transparent text-slate-400 hover:text-white font-medium'
             }`}
           >
             {tab.label}

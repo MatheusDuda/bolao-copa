@@ -436,7 +436,7 @@ export default function Admin() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <h2 className="text-xl font-bold mb-4 text-copa-red">Painel Admin</h2>
+      <h1 className="text-3xl font-black text-white mb-6 tracking-tight">Painel Admin</h1>
       <div className="flex gap-1 mb-6 bg-gray-900 p-1 rounded-xl w-fit">
         {ADMIN_TABS.map(t => (
           <button

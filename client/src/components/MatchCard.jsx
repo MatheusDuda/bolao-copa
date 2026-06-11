@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { FlagImg } from '../utils/flagMap';
 
 function matchIndicator(pred, match) {
-  if (match.status !== 'finished') return { icon: '⏳', label: 'Aguardando', color: 'text-gray-400' };
-  if (!pred) return { icon: '—', label: 'Sem palpite', color: 'text-gray-500' };
+  if (match.status !== 'finished') return { icon: '⏳', label: 'Aguardando', color: 'text-slate-500' };
+  if (!pred) return { icon: '—', label: 'Sem palpite', color: 'text-slate-600' };
   if (pred.score_a === match.score_a && pred.score_b === match.score_b)
     return { icon: '✅', label: 'Placar exato (+3)', color: 'text-green-400' };
   const winner = (a, b) => a > b ? 'a' : b > a ? 'b' : 'draw';
   if (winner(pred.score_a, pred.score_b) === winner(match.score_a, match.score_b))
-    return { icon: '🟡', label: 'Vencedor certo (+1)', color: 'text-copa-red' };
+    return { icon: '🟡', label: 'Vencedor certo (+1)', color: 'text-yellow-400' };
   return { icon: '❌', label: 'Errou', color: 'text-red-400' };
 }
 
@@ -19,8 +20,8 @@ function hoursUntil(datetime) {
 
 export default function MatchCard({ match, prediction, onSaved, readOnly = false }) {
   const { effectiveUser } = useAuth();
-  const [scoreA, setScoreA] = useState(prediction?.score_a ?? '');
-  const [scoreB, setScoreB] = useState(prediction?.score_b ?? '');
+  const [scoreA, setScoreA] = useState(prediction?.score_a ?? 0);
+  const [scoreB, setScoreB] = useState(prediction?.score_b ?? 0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -30,7 +31,6 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
   const canEdit = !readOnly && !isLocked && match.status !== 'finished';
 
   const handleSave = async () => {
-    if (scoreA === '' || scoreB === '') return;
     setSaving(true);
     setError('');
     try {
@@ -60,77 +60,147 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
   });
 
   return (
-    <div className="card space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">{match.phase} · {dateStr}</span>
-        <span className={`text-sm ${indicator.color}`} title={indicator.label}>{indicator.icon}</span>
+    <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-5">
+
+      {/* Header: badge + data + ícone */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full
+                           bg-copa-green/15 text-copa-green border border-copa-green/25 whitespace-nowrap">
+            {match.phase}
+          </span>
+          <span className="text-slate-400 text-sm">{dateStr}</span>
+        </div>
+        <span className={`text-sm flex-shrink-0 ${indicator.color}`} title={indicator.label}>
+          {indicator.icon}
+        </span>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="flex-1 text-right font-semibold text-sm">{match.team_a}</span>
+      {/* Times */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2 flex-1">
+          <FlagImg team={match.team_a} />
+          <span className={`font-bold text-white ${match.team_a.length > 12 ? 'text-sm' : 'text-base'}`}>
+            {match.team_a}
+          </span>
+        </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex-shrink-0 text-center">
           {match.status === 'finished' ? (
-            <span className="text-lg font-bold text-copa-red">
+            <span className="text-lg font-bold text-copa-red font-mono whitespace-nowrap">
               {match.score_a} – {match.score_b}
             </span>
           ) : (
-            <span className="text-gray-500 text-sm">vs</span>
+            <span className="text-3xl font-black text-slate-700 tracking-widest px-4">VS</span>
           )}
         </div>
 
-        <span className="flex-1 text-left font-semibold text-sm">{match.team_b}</span>
+        <div className="flex items-center gap-2 flex-1 justify-end">
+          <span className={`font-bold text-white ${match.team_b.length > 12 ? 'text-sm' : 'text-base'}`}>
+            {match.team_b}
+          </span>
+          <FlagImg team={match.team_b} />
+        </div>
       </div>
 
-      {/* Prediction inputs */}
-      {!readOnly && (
-        <div className="flex items-center gap-2 pt-1">
-          <span className="text-xs text-gray-400 mr-1">Seu palpite:</span>
-          <input
-            type="number" min="0" max="99"
-            value={scoreA}
-            onChange={e => setScoreA(e.target.value)}
-            disabled={!canEdit}
-            className="w-14 text-center input text-sm py-1 disabled:opacity-50"
-            placeholder="0"
-          />
-          <span className="text-gray-400">×</span>
-          <input
-            type="number" min="0" max="99"
-            value={scoreB}
-            onChange={e => setScoreB(e.target.value)}
-            disabled={!canEdit}
-            className="w-14 text-center input text-sm py-1 disabled:opacity-50"
-            placeholder="0"
-          />
+      {/* Área de palpite */}
+      {!readOnly && !isLocked && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-slate-500 text-xs">Seu palpite:</span>
+
+          {/* Spinner A */}
+          <div className="flex items-stretch gap-1">
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => setScoreA(v => Math.min(99, v + 1))}
+                disabled={!canEdit}
+                className="w-7 h-7 flex items-center justify-center rounded-md
+                           bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold
+                           disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >+</button>
+              <button
+                onClick={() => setScoreA(v => Math.max(0, v - 1))}
+                disabled={!canEdit}
+                className="w-7 h-7 flex items-center justify-center rounded-md
+                           bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold
+                           disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >−</button>
+            </div>
+            <div
+              className="w-12 flex items-center justify-center
+                         bg-slate-800 border border-slate-600 rounded-lg
+                         text-white font-mono text-2xl font-bold"
+              style={{ minHeight: '62px' }}
+            >
+              {scoreA}
+            </div>
+          </div>
+
+          <span className="self-center text-slate-500 font-bold text-lg">×</span>
+
+          {/* Spinner B */}
+          <div className="flex items-stretch gap-1">
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => setScoreB(v => Math.min(99, v + 1))}
+                disabled={!canEdit}
+                className="w-7 h-7 flex items-center justify-center rounded-md
+                           bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold
+                           disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >+</button>
+              <button
+                onClick={() => setScoreB(v => Math.max(0, v - 1))}
+                disabled={!canEdit}
+                className="w-7 h-7 flex items-center justify-center rounded-md
+                           bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold
+                           disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >−</button>
+            </div>
+            <div
+              className="w-12 flex items-center justify-center
+                         bg-slate-800 border border-slate-600 rounded-lg
+                         text-white font-mono text-2xl font-bold"
+              style={{ minHeight: '62px' }}
+            >
+              {scoreB}
+            </div>
+          </div>
+
           {canEdit && (
             <button
               onClick={handleSave}
-              disabled={saving || scoreA === '' || scoreB === ''}
-              className="btn-primary text-xs py-1 px-3 ml-1"
+              disabled={saving}
+              className="ml-2 self-center px-5 py-2.5 bg-copa-green hover:bg-green-600
+                         text-white font-semibold rounded-lg transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? '...' : saved ? '✓' : 'Salvar'}
             </button>
           )}
-          {isLocked && match.status !== 'finished' && (
-            <span className="text-xs text-orange-400 ml-1">🔒 Fechado</span>
-          )}
         </div>
       )}
 
-      {error && <p className="text-red-400 text-xs">{error}</p>}
+      {/* Indicador de bloqueio */}
+      {!readOnly && isLocked && match.status !== 'finished' && (
+        <div className="pt-2 border-t border-slate-800">
+          <span className="text-xs text-slate-500">🔒 Fechado</span>
+        </div>
+      )}
 
-      {/* Show existing prediction read-only */}
+      {/* Palpite somente leitura */}
       {readOnly && prediction && (
-        <div className="flex items-center gap-2 text-sm text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-slate-500 pt-1 border-t border-slate-800">
           <span>Palpite:</span>
-          <span className="font-semibold text-gray-200">{prediction.score_a} × {prediction.score_b}</span>
-          <span className={`ml-auto ${indicator.color}`}>{indicator.icon} {indicator.label}</span>
+          <span className="font-semibold text-slate-200 font-mono">{prediction.score_a} × {prediction.score_b}</span>
+          <span className={`ml-auto text-xs ${indicator.color}`}>{indicator.icon} {indicator.label}</span>
         </div>
       )}
 
+      {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+
+      {/* Aviso de fechamento */}
       {!readOnly && hours > 0 && hours < 24 && !isLocked && (
-        <p className="text-xs text-orange-300">
+        <p className="text-yellow-400 text-xs mt-3">
           ⚠ Fecha em {hours < 1 ? `${Math.round(hours * 60)}min` : `${Math.round(hours)}h`}
         </p>
       )}

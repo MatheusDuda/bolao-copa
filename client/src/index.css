@@ -3,28 +3,51 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    min-height: 100vh;
+    background: transparent;
+  }
+
+  #root {
+    min-height: 100vh;
+    background: transparent;
+  }
+
   body {
-    @apply bg-gray-950 text-gray-100 min-h-screen;
+    @apply text-slate-100;
+    min-height: 100vh;
+    background-color: #030712;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 15% -10%, rgba(220,38,38,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 85% 5%, rgba(0,156,59,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 30% at 50% 100%, rgba(0,39,118,0.09) 0%, transparent 50%);
+    background-attachment: fixed;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-copa-green hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-copa-green hover:bg-green-600 text-white font-semibold
+           px-4 py-2 rounded-lg transition-colors
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply bg-gray-700 hover:bg-gray-600 text-gray-100 font-semibold px-4 py-2 rounded-lg transition-colors;
+    @apply bg-slate-700 hover:bg-slate-600 text-white font-medium
+           px-4 py-2 rounded-lg transition-colors;
   }
   .btn-danger {
-    @apply bg-red-700 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors;
+    @apply bg-copa-red hover:bg-red-700 text-white font-medium
+           px-4 py-2 rounded-lg transition-colors;
   }
   .card {
-    @apply bg-gray-800 border border-gray-700 rounded-xl p-4;
+    @apply bg-[#0f172a] border border-slate-800 rounded-xl;
   }
   .input {
-    @apply bg-gray-700 border border-gray-600 text-gray-100 rounded-lg px-3 py-2 w-full focus:outline-none focus:border-copa-green focus:ring-1 focus:ring-copa-green;
+    @apply bg-slate-800 border border-slate-700 text-white rounded-lg
+           px-3 py-2 w-full focus:outline-none focus:border-slate-500
+           focus:ring-1 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .label {
-    @apply text-sm text-gray-400 mb-1 block;
+    @apply text-slate-300 text-sm font-medium mb-1 block;
   }
 }
