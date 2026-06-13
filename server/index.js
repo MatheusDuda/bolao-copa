@@ -42,9 +42,12 @@ async function recalculateAllScores() {
       let pts = 0;
       if (match && match.status === 'finished') {
         gamesPlayed++;
-        if (pred.score_a === match.score_a && pred.score_b === match.score_b) {
-          pts = 3;
-        } else if (winner(pred.score_a, pred.score_b) === winner(match.score_a, match.score_b)) {
+        const exactScore = pred.score_a === match.score_a && pred.score_b === match.score_b;
+        const matchResult = winner(match.score_a, match.score_b);
+        const predResult = winner(pred.score_a, pred.score_b);
+        if (exactScore) {
+          pts = matchResult === 'draw' ? 4 : 3;
+        } else if (predResult === matchResult) {
           pts = 1;
         }
       }

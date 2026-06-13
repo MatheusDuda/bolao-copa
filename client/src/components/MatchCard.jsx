@@ -6,11 +6,18 @@ import { FlagImg } from '../utils/flagMap';
 function matchIndicator(pred, match) {
   if (match.status !== 'finished') return { icon: '⏳', label: 'Aguardando', color: 'text-slate-500' };
   if (!pred) return { icon: '—', label: 'Sem palpite', color: 'text-slate-600' };
-  if (pred.score_a === match.score_a && pred.score_b === match.score_b)
-    return { icon: '✅', label: 'Placar exato (+3)', color: 'text-green-400' };
-  const winner = (a, b) => a > b ? 'a' : b > a ? 'b' : 'draw';
-  if (winner(pred.score_a, pred.score_b) === winner(match.score_a, match.score_b))
-    return { icon: '🟡', label: 'Vencedor certo (+1)', color: 'text-yellow-400' };
+  const win = (a, b) => a > b ? 'a' : b > a ? 'b' : 'draw';
+  const matchResult = win(match.score_a, match.score_b);
+  const predResult = win(pred.score_a, pred.score_b);
+  const exactScore = pred.score_a === match.score_a && pred.score_b === match.score_b;
+  if (exactScore) {
+    const pts = matchResult === 'draw' ? 4 : 3;
+    return { icon: '✅', label: `Placar exato (+${pts})`, color: 'text-green-400' };
+  }
+  if (predResult === matchResult) {
+    const label = matchResult === 'draw' ? 'Empate certo (+1)' : 'Vencedor certo (+1)';
+    return { icon: '🟡', label, color: 'text-yellow-400' };
+  }
   return { icon: '❌', label: 'Errou', color: 'text-red-400' };
 }
 
