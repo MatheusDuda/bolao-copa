@@ -170,8 +170,12 @@ app.delete('/api/users/:id', requireUser, requireAdmin, async (req, res) => {
 
 // Matches
 app.get('/api/matches', async (req, res) => {
-  const { data: matches } = await supabase.from('matches').select('*');
-  res.json(matches);
+  const [{ data: matches }, { data: settings }] = await Promise.all([
+    supabase.from('matches').select('*'),
+    supabase.from('settings').select('hours_before_lock').eq('id', 1).single()
+  ]);
+  const lockHours = settings?.hours_before_lock ?? 0;
+  res.json((matches || []).map(m => ({ ...m, lock_hours: lockHours })));
 });
 
 app.post('/api/matches', requireUser, requireAdmin, async (req, res) => {

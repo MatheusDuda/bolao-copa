@@ -34,7 +34,7 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
   const [error, setError] = useState('');
 
   const hours = hoursUntil(match.datetime);
-  const isLocked = hours < (match.lock_hours ?? 1);
+  const isLocked = hours < (match.lock_hours ?? 0);
   const canEdit = !readOnly && !isLocked && match.status !== 'finished';
 
   const isDirty = scoreA !== (prediction?.score_a ?? 0) || scoreB !== (prediction?.score_b ?? 0);

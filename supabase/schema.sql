@@ -60,7 +60,7 @@ CREATE TABLE extra_results (
 -- settings (single row, id=1)
 CREATE TABLE settings (
   id INTEGER PRIMARY KEY DEFAULT 1,
-  hours_before_lock INTEGER NOT NULL DEFAULT 1,
+  hours_before_lock INTEGER NOT NULL DEFAULT 0,
   football_data_api_key TEXT NOT NULL DEFAULT '',
   copa_start_date DATE NOT NULL DEFAULT '2026-06-12'
 );
