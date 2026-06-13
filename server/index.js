@@ -344,8 +344,12 @@ app.put('/api/settings', requireUser, requireAdmin, async (req, res) => {
 
 // Standings
 app.get('/api/standings', async (req, res) => {
-  const { data: users } = await supabase.from('users').select('id,display_name,username,score,score_breakdown,role').neq('role', 'admin').order('score', { ascending: false });
-  const standings = (users || []).map((u, i) => ({ ...u, position: i + 1 }));
+  const { data: users } = await supabase.from('users').select('id,display_name,username,score,score_breakdown,role').neq('role', 'admin');
+  const sorted = (users || []).sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return (b.score_breakdown?.games_played ?? 0) - (a.score_breakdown?.games_played ?? 0);
+  });
+  const standings = sorted.map((u, i) => ({ ...u, position: i + 1 }));
   res.json(standings);
 });
 
