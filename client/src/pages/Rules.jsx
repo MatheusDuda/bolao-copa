@@ -66,6 +66,9 @@ export default function Rules() {
         <p className="text-slate-300 text-sm leading-relaxed">
           A classificação é atualizada automaticamente conforme os resultados dos jogos são inseridos. Quem somar mais pontos no final do torneio vence o bolão.
         </p>
+        <div className="text-slate-500 text-xs pt-1 border-t border-slate-800">
+          <span className="text-slate-400 font-medium">Desempate:</span> em caso de igualdade em pontos, quem tiver mais palpites registrados fica na frente.
+        </div>
       </Section>
     </div>
   );
