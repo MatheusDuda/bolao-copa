@@ -53,9 +53,16 @@ export default function Predictions() {
     .filter(m => m.phase === currentPhase)
     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
-  const todayStr = new Date().toDateString();
-  const todayMatches = phaseMatches.filter(m => new Date(m.datetime).toDateString() === todayStr);
-  const otherMatches = phaseMatches.filter(m => new Date(m.datetime).toDateString() !== todayStr);
+  const now = Date.now();
+  const in24h = now + 24 * 3_600_000;
+  const todayMatches = phaseMatches.filter(m => {
+    const t = new Date(m.datetime).getTime();
+    return t >= now && t <= in24h;
+  });
+  const otherMatches = phaseMatches.filter(m => {
+    const t = new Date(m.datetime).getTime();
+    return t < now || t > in24h;
+  });
   const hasToday = todayMatches.length > 0;
 
   if (loading) return <div className="py-16 text-center text-slate-500">Carregando...</div>;
