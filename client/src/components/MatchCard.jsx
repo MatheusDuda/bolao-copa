@@ -194,9 +194,9 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
       )}
 
       {/* Indicador de bloqueio */}
-      {!readOnly && isLocked && match.status !== 'finished' && (
+      {!readOnly && isLocked && (
         <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-          <span className="text-xs text-slate-500">🔒 Fechado</span>
+          <span className="text-xs text-slate-500">{match.status === 'finished' ? '✅ Encerrado' : '🔒 Fechado'}</span>
           <span className="text-xs text-slate-500">
             Meu palpite:{' '}
             {prediction
