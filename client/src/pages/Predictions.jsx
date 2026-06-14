@@ -53,17 +53,16 @@ export default function Predictions() {
     .filter(m => m.phase === currentPhase)
     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
-  const now = Date.now();
-  const in24h = now + 24 * 3_600_000;
-  const todayMatches = phaseMatches.filter(m => {
-    const t = new Date(m.datetime).getTime();
-    return t >= now && t <= in24h;
+  const todayStr    = new Date().toDateString();
+  const tomorrowStr = new Date(Date.now() + 24 * 3_600_000).toDateString();
+  const todayMatches    = phaseMatches.filter(m => new Date(m.datetime).toDateString() === todayStr);
+  const tomorrowMatches = phaseMatches.filter(m => new Date(m.datetime).toDateString() === tomorrowStr);
+  const otherMatches    = phaseMatches.filter(m => {
+    const s = new Date(m.datetime).toDateString();
+    return s !== todayStr && s !== tomorrowStr;
   });
-  const otherMatches = phaseMatches.filter(m => {
-    const t = new Date(m.datetime).getTime();
-    return t < now || t > in24h;
-  });
-  const hasToday = todayMatches.length > 0;
+  const hasToday    = todayMatches.length > 0;
+  const hasTomorrow = tomorrowMatches.length > 0;
 
   if (loading) return <div className="py-16 text-center text-slate-500">Carregando...</div>;
   if (phases.length === 0) return (
@@ -96,18 +95,29 @@ export default function Predictions() {
         <div className="flex-1 min-w-0">
           {phaseMatches.length === 0 ? (
             <p className="text-slate-500">Nenhum jogo nesta fase.</p>
-          ) : hasToday ? (
+          ) : (
             <>
-              <div className="grid gap-5 sm:grid-cols-2">
-                {todayMatches.map(match => (
-                  <MatchCard
-                    key={match.id}
-                    match={match}
-                    prediction={predMap[match.id]}
-                    onSaved={load}
-                  />
-                ))}
-              </div>
+              {hasToday && (
+                <>
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Hoje</h2>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    {todayMatches.map(match => (
+                      <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {hasTomorrow && (
+                <div className={hasToday ? 'mt-8' : ''}>
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Amanhã</h2>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    {tomorrowMatches.map(match => (
+                      <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {otherMatches.length > 0 && (
                 <div className="mt-6">
@@ -127,33 +137,20 @@ export default function Predictions() {
                     </svg>
                     <div className="flex-1 h-px bg-slate-700" />
                   </button>
-
                   {showAll && (
                     <div className="grid gap-5 sm:grid-cols-2 mt-5">
                       {otherMatches.map(match => (
-                        <MatchCard
-                          key={match.id}
-                          match={match}
-                          prediction={predMap[match.id]}
-                          onSaved={load}
-                        />
+                        <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} />
                       ))}
                     </div>
                   )}
                 </div>
               )}
+
+              {!hasToday && !hasTomorrow && otherMatches.length === 0 && (
+                <p className="text-slate-500">Nenhum jogo nesta fase.</p>
+              )}
             </>
-          ) : (
-            <div className="grid gap-5 sm:grid-cols-2">
-              {phaseMatches.map(match => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  prediction={predMap[match.id]}
-                  onSaved={load}
-                />
-              ))}
-            </div>
           )}
         </div>
 
