@@ -46,7 +46,7 @@ async function recalculateAllScores() {
         const matchResult = winner(match.score_a, match.score_b);
         const predResult = winner(pred.score_a, pred.score_b);
         if (exactScore) {
-          pts = matchResult === 'draw' ? 4 : 3;
+          pts = 3;
         } else if (predResult === matchResult) {
           pts = 1;
         }
@@ -426,17 +426,8 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
   const base = 'https://api.football-data.org/v4';
 
   try {
-    const [matchesRes, scorersRes, standingsRes] = await Promise.all([
-      fetch(`${base}/competitions/WC/matches?season=2026`, { headers }),
-      fetch(`${base}/competitions/WC/scorers?season=2026&limit=1`, { headers }),
-      fetch(`${base}/competitions/WC/standings?season=2026`, { headers })
-    ]);
-
-    const [matchesData, scorersData, standingsData] = await Promise.all([
-      matchesRes.json(),
-      scorersRes.json(),
-      standingsRes.json()
-    ]);
+    const matchesRes = await fetch(`${base}/competitions/WC/matches?season=2026`, { headers });
+    const matchesData = await matchesRes.json();
 
     let synced = 0;
     let created = 0;
@@ -495,38 +486,6 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
           created++;
         }
       }
-    }
-
-    const extraUpdates = {};
-
-    if (scorersData.scorers?.length > 0) {
-      const top = scorersData.scorers[0];
-      extraUpdates.top_scorer = top.player?.name || null;
-    }
-
-    if (standingsData.standings) {
-      const groupStandings = standingsData.standings.filter(s => s.stage === 'GROUP_STAGE');
-      let bestAttackTeam = null, bestAttackGoals = -1;
-      let bestDefenseTeam = null, bestDefenseGoals = Infinity;
-
-      for (const group of groupStandings) {
-        for (const row of group.table || []) {
-          if (row.goalsFor > bestAttackGoals) {
-            bestAttackGoals = row.goalsFor;
-            bestAttackTeam = translateTeam(row.team?.name) || null;
-          }
-          if (row.goalsAgainst < bestDefenseGoals) {
-            bestDefenseGoals = row.goalsAgainst;
-            bestDefenseTeam = translateTeam(row.team?.name) || null;
-          }
-        }
-      }
-      if (bestAttackTeam) extraUpdates.best_attack = bestAttackTeam;
-      if (bestDefenseTeam) extraUpdates.best_defense = bestDefenseTeam;
-    }
-
-    if (Object.keys(extraUpdates).length) {
-      await supabase.from('extra_results').update(extraUpdates).eq('id', 1);
     }
 
     await recalculateAllScores();

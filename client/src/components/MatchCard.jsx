@@ -11,7 +11,7 @@ function matchIndicator(pred, match) {
   const predResult = win(pred.score_a, pred.score_b);
   const exactScore = pred.score_a === match.score_a && pred.score_b === match.score_b;
   if (exactScore) {
-    const pts = matchResult === 'draw' ? 4 : 3;
+    const pts = 3;
     return { icon: '✅', label: `Placar exato (+${pts})`, color: 'text-green-400' };
   }
   if (predResult === matchResult) {

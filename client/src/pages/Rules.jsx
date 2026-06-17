@@ -40,11 +40,8 @@ export default function Rules() {
         <Row
           label="Empate certo"
           pts={1}
-          desc="Acertou que o jogo terminaria empatado, independente do placar"
+          desc="Acertou que era empate, mas errou o placar"
         />
-        <div className="bg-slate-800/50 rounded-lg p-3 text-slate-300 text-xs">
-          <span className="text-copa-green font-bold">Dica:</span> Acertar o placar exato de um empate vale <span className="text-copa-green font-bold">4 pts</span> (3 pelo placar + 1 pelo empate).
-        </div>
         <div className="text-slate-500 text-xs pt-1 border-t border-slate-800">
           Resultado errado = 0 pts. Jogos sem palpite antes do fechamento = 0 pts.
         </div>
