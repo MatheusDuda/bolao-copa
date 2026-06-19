@@ -14,9 +14,6 @@ export default function Predictions() {
   const [showAll, setShowAll] = useState(false);
 
   const [participants, setParticipants] = useState([]);
-  const [viewingUser, setViewingUser] = useState(null);
-  const [otherPreds, setOtherPreds] = useState([]);
-  const [otherLoading, setOtherLoading] = useState(false);
 
   const load = async () => {
     const [m, p, standings] = await Promise.all([
@@ -26,24 +23,11 @@ export default function Predictions() {
     ]);
     setMatches(m);
     setPredictions(p);
-    setParticipants((standings || []).filter(u => u.id !== effectiveUser.id));
+    setParticipants(standings || []);
     setLoading(false);
   };
 
   useEffect(() => { load(); }, [effectiveUser.id]);
-
-  const selectUser = async (participant) => {
-    if (viewingUser?.id === participant.id) {
-      setViewingUser(null);
-      setOtherPreds([]);
-      return;
-    }
-    setViewingUser(participant);
-    setOtherLoading(true);
-    const preds = await api.getPredictions(participant.id);
-    setOtherPreds(preds || []);
-    setOtherLoading(false);
-  };
 
   const phases = PHASES.filter(ph => matches.some(m => m.phase === ph));
   const currentPhase = activePhase || phases[0];
@@ -102,7 +86,7 @@ export default function Predictions() {
                   <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Hoje</h2>
                   <div className="grid gap-5 sm:grid-cols-2">
                     {todayMatches.map(match => (
-                      <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} />
+                      <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} participants={participants} />
                     ))}
                   </div>
                 </>
@@ -113,7 +97,7 @@ export default function Predictions() {
                   <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Amanhã</h2>
                   <div className="grid gap-5 sm:grid-cols-2">
                     {tomorrowMatches.map(match => (
-                      <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} />
+                      <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} participants={participants} />
                     ))}
                   </div>
                 </div>
@@ -140,7 +124,7 @@ export default function Predictions() {
                   {showAll && (
                     <div className="grid gap-5 sm:grid-cols-2 mt-5">
                       {otherMatches.map(match => (
-                        <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} />
+                        <MatchCard key={match.id} match={match} prediction={predMap[match.id]} onSaved={load} participants={participants} />
                       ))}
                     </div>
                   )}
@@ -165,53 +149,6 @@ export default function Predictions() {
         <StandingsSidebar />
       </div>
 
-      {/* Palpites dos participantes */}
-      {participants.length > 0 && (
-        <div className="mt-10">
-          <h2 className="text-xl font-bold text-white mb-4">Palpites dos participantes</h2>
-
-          <div className="flex gap-2 flex-wrap mb-6">
-            {participants.map(p => (
-              <button
-                key={p.id}
-                onClick={() => selectUser(p)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  viewingUser?.id === p.id
-                    ? 'bg-copa-red/20 text-copa-red border border-copa-red/40'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-white border border-transparent'
-                }`}
-              >
-                {p.display_name}
-              </button>
-            ))}
-          </div>
-
-          {viewingUser && (
-            <div>
-              <p className="text-slate-400 text-sm mb-4">
-                Palpites de <span className="text-white font-semibold">{viewingUser.display_name}</span> — {currentPhase}
-              </p>
-              {otherLoading ? (
-                <div className="text-slate-500 text-sm py-4">Carregando...</div>
-              ) : (() => {
-                const otherPredMap = Object.fromEntries(otherPreds.map(p => [p.match_id, p]));
-                return (
-                  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {phaseMatches.map(match => (
-                      <MatchCard
-                        key={match.id}
-                        match={match}
-                        prediction={otherPredMap[match.id]}
-                        readOnly={true}
-                      />
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
