@@ -25,13 +25,16 @@ function hoursUntil(datetime) {
   return (new Date(datetime) - Date.now()) / 3_600_000;
 }
 
-export default function MatchCard({ match, prediction, onSaved, readOnly = false }) {
+export default function MatchCard({ match, prediction, onSaved, readOnly = false, participants = [] }) {
   const { effectiveUser } = useAuth();
   const [scoreA, setScoreA] = useState(prediction?.score_a ?? 0);
   const [scoreB, setScoreB] = useState(prediction?.score_b ?? 0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [expanded, setExpanded] = useState(false);
+  const [matchPreds, setMatchPreds] = useState(null);
+  const [loadingPreds, setLoadingPreds] = useState(false);
 
   const hours = hoursUntil(match.datetime);
   const isLocked = hours < (match.lock_hours ?? 0);
@@ -57,6 +60,30 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const togglePreds = async () => {
+    if (loadingPreds) return;
+    if (expanded) { setExpanded(false); return; }
+    setExpanded(true);
+    if (matchPreds === null) {
+      setLoadingPreds(true);
+      try {
+        const results = await Promise.all(
+          participants.map(p =>
+            api.getPredictions(p.id).then(preds => ({
+              user: p,
+              pred: (preds || []).find(pr => pr.match_id === match.id) || null
+            }))
+          )
+        );
+        setMatchPreds(results);
+      } catch {
+        setMatchPreds([]);
+      } finally {
+        setLoadingPreds(false);
+      }
     }
   };
 
@@ -223,6 +250,67 @@ export default function MatchCard({ match, prediction, onSaved, readOnly = false
         <p className="text-yellow-400 text-xs mt-3">
           ⚠ Fecha em {hours < 1 ? `${Math.round(hours * 60)}min` : `${Math.round(hours)}h`}
         </p>
+      )}
+
+      {/* Palpites inline dos participantes */}
+      {participants.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-slate-800">
+          <button
+            onClick={togglePreds}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            <svg
+              className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+            Ver palpites
+          </button>
+
+          {expanded && (
+            <div className="mt-2">
+              {loadingPreds ? (
+                <p className="text-xs text-slate-500 py-1">Carregando...</p>
+              ) : matchPreds !== null && (
+                matchPreds.length === 0 || matchPreds.every(({ pred }) => pred === null) ? (
+                  <p className="text-xs text-slate-500 py-1">Nenhum palpite ainda.</p>
+                ) : (
+                  <div className="space-y-0.5">
+                    {matchPreds.map(({ user, pred }) => {
+                      const isMe = user.id === effectiveUser.id;
+                      const ind = pred && match.status === 'finished' ? matchIndicator(pred, match) : null;
+                      return (
+                        <div
+                          key={user.id}
+                          className={`flex items-center gap-2 py-1.5 px-2 rounded-md text-xs ${
+                            isMe ? 'bg-copa-blue/20 border border-copa-blue/30' : ''
+                          }`}
+                        >
+                          {user.position != null && (
+                            <span className="text-slate-500 w-5 flex-shrink-0 text-right">#{user.position}</span>
+                          )}
+                          <span className={`flex-1 truncate ${isMe ? 'text-white font-medium' : 'text-slate-300'}`}>
+                            {user.display_name}
+                            {isMe && <span className="text-slate-500 font-normal ml-1">(você)</span>}
+                          </span>
+                          {pred ? (
+                            <span className="font-mono text-slate-200 flex-shrink-0 flex items-center gap-1">
+                              {pred.score_a} × {pred.score_b}
+                              {ind && <span title={ind.label}>{ind.icon}</span>}
+                            </span>
+                          ) : (
+                            <span className="text-slate-600 flex-shrink-0">—</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
