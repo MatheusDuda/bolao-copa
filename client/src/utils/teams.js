@@ -23,5 +23,5 @@ export const BRAZIL_PERFORMANCE_OPTIONS = [
 ];
 
 export const PHASES = [
-  'Fase de Grupos', 'Oitavas', 'Quartas', 'Semifinal', 'Terceiro Lugar', 'Final'
+  'Fase de Grupos', 'Rodada de 32', 'Oitavas', 'Quartas', 'Semifinal', 'Terceiro Lugar', 'Final'
 ];

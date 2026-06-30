@@ -5,6 +5,7 @@ import { api } from '../utils/api';
 const TABS = [
   { id: 'predictions', label: 'Palpites', authRequired: true },
   { id: 'pre-tournament', label: 'Pré-torneio', authRequired: true },
+  { id: 'bracket', label: '2ª fase', authRequired: true },
   { id: 'standings', label: 'Classificação' },
   { id: 'rules', label: 'Regras' },
   { id: 'report', label: 'Reportar erro', authRequired: true },

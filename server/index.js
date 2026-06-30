@@ -449,6 +449,7 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
 
         const phaseMap = {
           'GROUP_STAGE': 'Fase de Grupos',
+          'LAST_32': 'Rodada de 32',
           'LAST_16': 'Oitavas',
           'QUARTER_FINALS': 'Quartas',
           'SEMI_FINALS': 'Semifinal',
@@ -464,7 +465,7 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
         const score_b = m.score?.fullTime?.away ?? null;
 
         if (existing) {
-          const updates = { football_data_id: fdId, status, datetime };
+          const updates = { football_data_id: fdId, status, datetime, phase };
           if (status === 'finished') {
             updates.score_a = score_a;
             updates.score_b = score_b;
