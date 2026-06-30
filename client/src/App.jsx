@@ -5,7 +5,6 @@ import Header from './components/Header';
 import TabNav from './components/TabNav';
 import BrazilCountdown from './components/BrazilCountdown';
 import Predictions from './pages/Predictions';
-import Bracket from './pages/Bracket';
 import Matches from './pages/Matches';
 import PreTournament from './pages/PreTournament';
 import Standings from './pages/Standings';
@@ -32,7 +31,6 @@ export default function App() {
       </div>
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {activeTab === 'predictions' && <Predictions />}
-        {activeTab === 'bracket' && <Bracket />}
         {activeTab === 'pre-tournament' && <PreTournament />}
         {activeTab === 'standings' && <Standings />}
         {activeTab === 'rules' && <Rules />}
