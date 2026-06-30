@@ -449,7 +449,7 @@ app.post('/api/sync', requireUser, requireAdmin, async (req, res) => {
 
         const phaseMap = {
           'GROUP_STAGE': 'Fase de Grupos',
-          'LAST_32': 'Rodada de 32',
+          'LAST_32': '16 Avos',
           'LAST_16': 'Oitavas',
           'QUARTER_FINALS': 'Quartas',
           'SEMI_FINALS': 'Semifinal',
