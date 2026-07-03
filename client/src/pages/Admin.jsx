@@ -9,7 +9,8 @@ function UserModal({ user, onSave, onClose }) {
     username: user?.username || '',
     display_name: user?.display_name || '',
     password: '',
-    role: user?.role || 'user'
+    role: user?.role || 'user',
+    bonus_points: user?.bonus_points ?? 0
   });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -20,7 +21,7 @@ function UserModal({ user, onSave, onClose }) {
     e.preventDefault();
     setSaving(true);
     try {
-      const data = { ...form };
+      const data = { ...form, bonus_points: Number(form.bonus_points) || 0 };
       if (!data.password) delete data.password;
       if (user) await api.updateUser(user.id, data);
       else await api.createUser(data);
@@ -44,6 +45,13 @@ function UserModal({ user, onSave, onClose }) {
               <option value="admin">Admin</option>
             </select>
           </div>
+          {user && (
+            <div>
+              <label className="label">Pontos de bônus</label>
+              <input className="input" type="number" value={form.bonus_points} onChange={set('bonus_points')} />
+              <p className="text-xs text-gray-500 mt-1">Somado ao placar normal — use p/ compensar quem entrou depois, etc.</p>
+            </div>
+          )}
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <div className="flex gap-2 pt-1">
             <button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? '...' : 'Salvar'}</button>
@@ -81,6 +89,8 @@ function UsersTab() {
             <div>
               <span className="font-medium">{u.display_name}</span>
               <span className="text-gray-400 text-sm ml-2">@{u.username}</span>
+              <span className="text-gray-400 text-sm ml-2">· {u.score} pts</span>
+              {u.bonus_points > 0 && <span className="ml-2 text-xs bg-emerald-600/30 text-emerald-300 px-2 py-0.5 rounded-full">+{u.bonus_points} bônus</span>}
               {u.role === 'admin' && <span className="ml-2 text-xs bg-copa-blue/50 text-blue-300 px-2 py-0.5 rounded-full">admin</span>}
             </div>
             <div className="flex gap-2">

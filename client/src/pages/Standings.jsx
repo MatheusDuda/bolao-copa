@@ -9,7 +9,8 @@ const BREAKDOWN_LABELS = {
   best_attack: 'Melhor ataque',
   best_defense: 'Melhor defesa',
   neymar: 'Neymar',
-  brazil: 'Brasil'
+  brazil: 'Brasil',
+  bonus: 'Bônus'
 };
 
 export default function Standings() {

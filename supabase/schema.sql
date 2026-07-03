@@ -6,7 +6,8 @@ CREATE TABLE users (
   display_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'user',
   score INTEGER NOT NULL DEFAULT 0,
-  score_breakdown JSONB NOT NULL DEFAULT '{}'::jsonb
+  score_breakdown JSONB NOT NULL DEFAULT '{}'::jsonb,
+  bonus_points INTEGER NOT NULL DEFAULT 0
 );
 
 -- matches

@@ -22,7 +22,7 @@ async function recalculateAllScores() {
     { data: picks },
     { data: extraRow }
   ] = await Promise.all([
-    supabase.from('users').select('id'),
+    supabase.from('users').select('id,bonus_points'),
     supabase.from('predictions').select('*'),
     supabase.from('matches').select('id,score_a,score_b,status'),
     supabase.from('pre_tournament_picks').select('*'),
@@ -72,8 +72,9 @@ async function recalculateAllScores() {
       dbUpdates.push(supabase.from('pre_tournament_picks').update({ points: pickPoints }).eq('id', pick.id));
     }
 
-    const score_breakdown = { match_points: matchPts, games_played: gamesPlayed, ...extraPts };
-    const score = matchPts + pickPoints;
+    const bonus = user.bonus_points || 0;
+    const score_breakdown = { match_points: matchPts, games_played: gamesPlayed, ...extraPts, bonus };
+    const score = matchPts + pickPoints + bonus;
     dbUpdates.push(supabase.from('users').update({ score, score_breakdown }).eq('id', user.id));
   }
 
@@ -129,7 +130,7 @@ app.post('/api/login', async (req, res) => {
 
 // Users
 app.get('/api/users', requireUser, requireAdmin, async (req, res) => {
-  const { data: users } = await supabase.from('users').select('id,username,display_name,role,score,score_breakdown');
+  const { data: users } = await supabase.from('users').select('id,username,display_name,role,score,score_breakdown,bonus_points');
   res.json(users);
 });
 
@@ -150,13 +151,15 @@ app.post('/api/users', requireUser, requireAdmin, async (req, res) => {
 app.put('/api/users/:id', requireUser, requireAdmin, async (req, res) => {
   const { data: existing } = await supabase.from('users').select('id').eq('id', req.params.id).limit(1);
   if (!existing?.length) return res.status(404).json({ error: 'Usuário não encontrado' });
-  const { password, display_name, role, username } = req.body;
+  const { password, display_name, role, username, bonus_points } = req.body;
   const updates = {};
   if (username) updates.username = username;
   if (display_name) updates.display_name = display_name;
   if (password) updates.password = password;
   if (role) updates.role = role;
+  if (bonus_points !== undefined) updates.bonus_points = Number(bonus_points) || 0;
   const { data: updated } = await supabase.from('users').update(updates).eq('id', req.params.id).select().single();
+  if (bonus_points !== undefined) await recalculateAllScores();
   const { password: _, ...safe } = updated;
   res.json(safe);
 });
