@@ -51,9 +51,9 @@ CREATE TABLE pre_tournament_picks (
 CREATE TABLE extra_results (
   id INTEGER PRIMARY KEY DEFAULT 1,
   champion TEXT,
-  top_scorer TEXT,
-  best_attack TEXT,
-  best_defense TEXT,
+  top_scorer TEXT[],
+  best_attack TEXT[],
+  best_defense TEXT[],
   neymar_scored BOOLEAN,
   brazil_performance TEXT
 );

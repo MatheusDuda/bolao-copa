@@ -63,9 +63,9 @@ async function recalculateAllScores() {
 
     if (pick) {
       if (er.champion && pick.champion === er.champion) extraPts.champion = 10;
-      if (er.top_scorer && pick.top_scorer === er.top_scorer) extraPts.top_scorer = 8;
-      if (er.best_attack && pick.best_attack === er.best_attack) extraPts.best_attack = 5;
-      if (er.best_defense && pick.best_defense === er.best_defense) extraPts.best_defense = 5;
+      if (Array.isArray(er.top_scorer) && er.top_scorer.includes(pick.top_scorer)) extraPts.top_scorer = 8;
+      if (Array.isArray(er.best_attack) && er.best_attack.includes(pick.best_attack)) extraPts.best_attack = 5;
+      if (Array.isArray(er.best_defense) && er.best_defense.includes(pick.best_defense)) extraPts.best_defense = 5;
       if (er.neymar_scored !== null && er.neymar_scored !== undefined && pick.neymar_scores === er.neymar_scored) extraPts.neymar = 3;
       if (er.brazil_performance && pick.brazil_performance === er.brazil_performance) extraPts.brazil = 17;
       pickPoints = Object.values(extraPts).reduce((a, b) => a + b, 0);

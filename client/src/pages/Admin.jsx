@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { COPA_2026_TEAMS, BRAZIL_PERFORMANCE_OPTIONS, PHASES } from '../utils/teams';
@@ -256,11 +256,52 @@ function MatchesTab() {
   );
 }
 
+// ---- Chips input (multi-value, for tied winners) ----
+function ChipsInput({ value, onChange, options, placeholder }) {
+  const [input, setInput] = useState('');
+  const chips = value || [];
+  const generatedId = useId();
+  const listId = options ? generatedId : undefined;
+
+  const addChip = () => {
+    const v = input.trim();
+    if (!v) return;
+    if (options && !options.includes(v)) { setInput(''); return; }
+    if (!chips.includes(v)) onChange([...chips, v]);
+    setInput('');
+  };
+
+  return (
+    <div>
+      {chips.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {chips.map(c => (
+            <span key={c} className="flex items-center gap-1.5 bg-copa-green/20 text-copa-green text-xs px-2.5 py-1 rounded-full">
+              {c}
+              <button type="button" onClick={() => onChange(chips.filter(x => x !== c))} className="hover:text-white">✕</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <input
+        className="input"
+        list={listId}
+        value={input}
+        placeholder={placeholder}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChip(); } }}
+        onBlur={addChip}
+      />
+      {options && <datalist id={listId}>{options.map(o => <option key={o} value={o} />)}</datalist>}
+    </div>
+  );
+}
+
 // ---- Results Tab ----
 function ResultsTab() {
   const [extra, setExtra] = useState(null);
   const [form, setForm] = useState({
-    champion: '', top_scorer: '', best_attack: '', best_defense: '',
+    champion: '', top_scorer: [], best_attack: [], best_defense: [],
     neymar_scored: '', brazil_performance: ''
   });
   const [syncState, setSyncState] = useState('idle'); // idle|loading|success|error
@@ -273,9 +314,9 @@ function ResultsTab() {
     setExtra(e);
     setForm({
       champion: e.champion || '',
-      top_scorer: e.top_scorer || '',
-      best_attack: e.best_attack || '',
-      best_defense: e.best_defense || '',
+      top_scorer: e.top_scorer || [],
+      best_attack: e.best_attack || [],
+      best_defense: e.best_defense || [],
       neymar_scored: e.neymar_scored === true ? 'sim' : e.neymar_scored === false ? 'nao' : '',
       brazil_performance: e.brazil_performance || ''
     });
@@ -342,23 +383,34 @@ function ResultsTab() {
 
         <div>
           <label className="label">Artilheiro</label>
-          <input className="input" value={form.top_scorer} onChange={set('top_scorer')} placeholder="Nome do jogador" />
+          <ChipsInput
+            value={form.top_scorer}
+            onChange={v => setForm(p => ({ ...p, top_scorer: v }))}
+            placeholder="Nome do jogador (Enter p/ adicionar)"
+          />
+          <p className="text-xs text-gray-500 mt-1">Adicione mais de um nome em caso de empate na artilharia.</p>
         </div>
 
         <div>
           <label className="label">Melhor ataque (fase de grupos)</label>
-          <select className="input" value={form.best_attack} onChange={set('best_attack')}>
-            <option value="">Não definido</option>
-            {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
-          </select>
+          <ChipsInput
+            value={form.best_attack}
+            onChange={v => setForm(p => ({ ...p, best_attack: v }))}
+            options={COPA_2026_TEAMS}
+            placeholder="Selecionar seleção"
+          />
+          <p className="text-xs text-gray-500 mt-1">Adicione mais de uma seleção em caso de empate.</p>
         </div>
 
         <div>
           <label className="label">Melhor defesa (fase de grupos)</label>
-          <select className="input" value={form.best_defense} onChange={set('best_defense')}>
-            <option value="">Não definido</option>
-            {COPA_2026_TEAMS.map(t => <option key={t}>{t}</option>)}
-          </select>
+          <ChipsInput
+            value={form.best_defense}
+            onChange={v => setForm(p => ({ ...p, best_defense: v }))}
+            options={COPA_2026_TEAMS}
+            placeholder="Selecionar seleção"
+          />
+          <p className="text-xs text-gray-500 mt-1">Adicione mais de uma seleção em caso de empate.</p>
         </div>
 
         <div>
